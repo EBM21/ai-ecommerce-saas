@@ -5,26 +5,23 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const hostname = request.headers.get("host") || ""
 
-  // Define the base domains (we'll assume localhost:3000 for local dev, and nexus.app for prod)
-  // In a real app, this should be an environment variable
+  // Define the base domains
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
+  const isVercel = hostname.endsWith('.vercel.app') // <-- Vercel domain ko identify kiya
+  
   const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'nexus.app')
 
   // Parse the subdomain
   let currentHost = hostname.replace(`.${baseDomain}`, "")
   
-  // If the hostname equals the base domain (no subdomain), currentHost will be the baseDomain itself
-  // If there's a custom domain, it will be the full custom domain
-  
-  // If this is the main SaaS dashboard (no subdomain or 'app' subdomain)
-  if (currentHost === baseDomain || currentHost === 'app') {
+  // ── Main SaaS Dashboard Check ──
+  // Agar URL Vercel ka hai, base domain hai, ya 'app' subdomain hai
+  if (currentHost === baseDomain || currentHost === 'app' || isVercel) {
     // We are on the SaaS dashboard. Run the auth middleware.
     return await updateSession(request)
   }
 
-  // Otherwise, we are on a Storefront (a subdomain like mystore.localhost:3000 or customdomain.com)
-  // Rewrite the request to our dynamic storefront route
-  
+  // ── Storefront Subdomain Logic ──
   // Exclude static assets and api routes from rewrite
   if (
     url.pathname.startsWith('/_next') || 
