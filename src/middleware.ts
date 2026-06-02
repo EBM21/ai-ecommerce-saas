@@ -7,7 +7,7 @@ export async function middleware(request: NextRequest) {
 
   // Define the base domains
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
-  const isVercel = hostname.endsWith('quadlix.com') // <-- Vercel domain ko identify kiya
+  const isVercel = hostname.endsWith('.quadlix.com') // <-- Vercel domain ko identify kiya
   
   const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
 
