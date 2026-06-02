@@ -1,0 +1,123 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id                 String    @id @default(uuid())
+  email              String    @unique
+  name               String?
+  stripeCustomerId   String?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  stores             Store[]
+}
+
+model Store {
+  id                String    @id @default(uuid())
+  ownerId           String
+  name              String
+  subdomain         String    @unique
+  customDomain      String?   @unique
+  themeConfig       Json?
+  aiAssistantConfig Json?
+  stripeConnectId   String?
+  createdAt         DateTime  @default(now())
+  updatedAt         DateTime  @updatedAt
+
+  owner             User      @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+  products          Product[]
+  customers         Customer[]
+  orders            Order[]
+
+  @@index([ownerId])
+}
+
+model Product {
+  id              String    @id @default(uuid())
+  storeId         String
+  title           String
+  description     String?
+  seoMeta         Json?
+  price           Decimal   @db.Decimal(10, 2)
+  compareAtPrice  Decimal?  @db.Decimal(10, 2)
+  inventoryCount  Int       @default(0)
+  status          ProductStatus @default(DRAFT)
+  images          Json?
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  store           Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orderItems      OrderItem[]
+
+  @@index([storeId])
+}
+
+enum ProductStatus {
+  DRAFT
+  ACTIVE
+  ARCHIVED
+}
+
+model Customer {
+  id        String    @id @default(uuid())
+  storeId   String
+  email     String
+  name      String?
+  phone     String?
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+
+  store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  orders    Order[]
+
+  @@unique([storeId, email])
+  @@index([storeId])
+}
+
+model Order {
+  id                   String    @id @default(uuid())
+  storeId              String
+  customerId           String
+  totalAmount          Decimal   @db.Decimal(10, 2)
+  status               OrderStatus @default(PENDING)
+  stripePaymentIntentId String?
+  shippingAddress      Json?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  store                Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer             Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  orderItems           OrderItem[]
+
+  @@index([storeId])
+  @@index([customerId])
+}
+
+enum OrderStatus {
+  PENDING
+  PAID
+  FULFILLED
+  CANCELLED
+}
+
+model OrderItem {
+  id              String    @id @default(uuid())
+  orderId         String
+  productId       String
+  quantity        Int
+  priceAtPurchase Decimal   @db.Decimal(10, 2)
+
+  order           Order     @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  product         Product   @relation(fields: [productId], references: [id], onDelete: Restrict)
+
+  @@index([orderId])
+  @@index([productId])
+}

@@ -1,0 +1,240 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap');
+
+*,
+*::before,
+*::after {
+    box-sizing: border-box;
+}
+
+body {
+    font-family: 'Inter', system-ui, sans-serif;
+    background: #040408;
+    color: #ececf1;
+    margin: 0;
+}
+
+::-webkit-scrollbar {
+    width: 3px;
+}
+
+::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+    background: rgba(139, 92, 246, 0.25);
+    border-radius: 99px;
+}
+
+/* ── Sidebar glow line ── */
+.sidebar-glow-line {
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 1px;
+    background: linear-gradient(180deg,
+            transparent 0%,
+            rgba(139, 92, 246, 0.25) 25%,
+            rgba(139, 92, 246, 0.25) 75%,
+            transparent 100%);
+    pointer-events: none;
+}
+
+/* ── Nav links ── */
+.nav-link {
+    text-decoration: none;
+    position: relative;
+    display: flex;
+    align-items: center;
+    border-radius: 8px;
+    margin-bottom: 1px;
+    transition: background 0.15s, color 0.15s;
+    cursor: pointer;
+}
+
+.nav-link:hover {
+    background: rgba(255, 255, 255, 0.05) !important;
+    color: rgba(236, 236, 241, 0.8) !important;
+}
+
+.nav-link.active {
+    background: rgba(139, 92, 246, 0.12) !important;
+    color: #ececf1 !important;
+}
+
+.nav-link:hover .nav-tooltip {
+    opacity: 1 !important;
+    pointer-events: auto !important;
+}
+
+/* ── Animations ── */
+@keyframes ai-pulse {
+
+    0%,
+    100% {
+        box-shadow: 0 0 0 0 rgba(139, 92, 246, 0.5);
+    }
+
+    50% {
+        box-shadow: 0 0 0 4px rgba(139, 92, 246, 0);
+    }
+}
+
+.ai-badge-pulse {
+    animation: ai-pulse 2.5s ease-in-out infinite;
+}
+
+@keyframes dot-blink {
+
+    0%,
+    100% {
+        opacity: 1;
+    }
+
+    50% {
+        opacity: 0.3;
+    }
+}
+
+.dot-blink {
+    animation: dot-blink 2s ease infinite;
+}
+
+/* ── Search modal ── */
+.search-overlay {
+    position: fixed;
+    inset: 0;
+    z-index: 300;
+    background: rgba(4, 4, 8, 0.8);
+    backdrop-filter: blur(12px);
+    display: flex;
+    align-items: flex-start;
+    justify-content: center;
+    padding-top: 90px;
+}
+
+.search-modal {
+    width: 100%;
+    max-width: 560px;
+    background: #0c0c18;
+    border: 1px solid rgba(139, 92, 246, 0.25);
+    border-radius: 18px;
+    overflow: hidden;
+    box-shadow:
+        0 0 0 1px rgba(139, 92, 246, 0.08),
+        0 40px 80px rgba(0, 0, 0, 0.7),
+        0 0 60px rgba(109, 40, 217, 0.12);
+    animation: modalIn 0.2s cubic-bezier(0.34, 1.56, 0.64, 1);
+}
+
+@keyframes modalIn {
+    from {
+        opacity: 0;
+        transform: scale(0.96) translateY(-12px);
+    }
+
+    to {
+        opacity: 1;
+        transform: scale(1) translateY(0);
+    }
+}
+
+/* ── Dropdown ── */
+.user-dropdown {
+    position: absolute;
+    bottom: calc(100% + 8px);
+    left: 8px;
+    right: 8px;
+    background: #0c0c18;
+    border: 1px solid rgba(255, 255, 255, 0.08);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 -20px 60px rgba(0, 0, 0, 0.5), 0 0 0 1px rgba(139, 92, 246, 0.08);
+    animation: dropUp 0.18s cubic-bezier(0.34, 1.56, 0.64, 1);
+    z-index: 100;
+}
+
+.user-dropdown.collapsed {
+    left: calc(100% + 8px);
+    bottom: 0;
+    width: 200px;
+}
+
+@keyframes dropUp {
+    from {
+        opacity: 0;
+        transform: translateY(8px) scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+}
+
+.dropdown-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    font-size: 13px;
+    color: rgba(236, 236, 241, 0.6);
+    cursor: pointer;
+    transition: all 0.12s;
+    border: none;
+    background: transparent;
+    width: 100%;
+    text-align: left;
+    font-family: 'Inter', sans-serif;
+    text-decoration: none;
+}
+
+.dropdown-item:hover {
+    background: rgba(255, 255, 255, 0.05);
+    color: #ececf1;
+}
+
+.dropdown-item.danger:hover {
+    background: rgba(239, 68, 68, 0.08);
+    color: #f87171;
+}
+
+.dropdown-sep {
+    height: 1px;
+    background: rgba(255, 255, 255, 0.06);
+    margin: 4px 0;
+}
+
+/* ── Hover states ── */
+.topbar-search-btn:hover {
+    border-color: rgba(139, 92, 246, 0.3) !important;
+    background: rgba(139, 92, 246, 0.04) !important;
+}
+
+.icon-btn:hover {
+    border-color: rgba(255, 255, 255, 0.12) !important;
+    color: #ececf1 !important;
+}
+
+.ai-studio-btn:hover {
+    background: rgba(139, 92, 246, 0.18) !important;
+    border-color: rgba(139, 92, 246, 0.4) !important;
+}
+
+/* ── Page animation ── */
+@keyframes pageFade {
+    from {
+        opacity: 0;
+        transform: translateY(6px);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
+}
+
+.page-wrap {
+    animation: pageFade 0.28s ease both;
+}
