@@ -27,7 +27,7 @@ export default async function ProductsPage() {
   })
 
   // 3. Data format karein taake Client Component mein error na aaye
-  const formattedProducts = products.map((p: { id: any; title: any; description: any; price: any; compareAtPrice: any; inventoryCount: any; status: any; images: string; createdAt: { toISOString: () => any } }) => ({
+  const formattedProducts = products.map((p: { id: any; title: any; description: any; price: any; compareAtPrice: any; inventoryCount: any; status: any; images: any; createdAt: { toISOString: () => any; }; }) => ({
     id: p.id,
     title: p.title,
     description: p.description || "",
