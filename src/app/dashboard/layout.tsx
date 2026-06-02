@@ -12,7 +12,21 @@ import {
   User, CreditCard, HelpCircle, ChevronUp,
 } from "lucide-react"
 
-const NAV_GROUPS = [
+
+type NavItem = {
+  label: string;
+  href: string;
+  icon: any;
+  badge?: string; // <-- '?' ka matlab hai ye optional hai
+};
+
+type NavGroup = {
+  label: string;
+  items: NavItem[];
+};
+
+// 👇 2. NAV_GROUPS ke sath : NavGroup[] lagayen 👇
+const NAV_GROUPS: NavGroup[] = [
   {
     label: "Core",
     items: [
@@ -25,7 +39,7 @@ const NAV_GROUPS = [
   {
     label: "Intelligence",
     items: [
-      { label: "AI Studio", href: "/dashboard/ai-studio", icon: Sparkles, badge: "NEW" },
+      { label: "AI Studio", href: "/dashboard/ai-studio", icon: Sparkles, badge: "New"},
     ],
   },
   {
