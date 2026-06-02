@@ -374,8 +374,7 @@ export default function LoginPage() {
                               <img
                                 key={i}
                                 src={`https://i.pravatar.cc/32${u}`}
-                                className="size-7 rounded-full ring-2"
-                                style={{ ringColor: '#080810' }}
+                                className="size-7 rounded-full ring-2 ring-[#080810]"
                                 alt=""
                               />
                             ))}
