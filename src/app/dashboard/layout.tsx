@@ -59,8 +59,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [userMenu, setUserMenu] = useState(false)
   const [time, setTime] = useState("")
   
-  // Trial States
-  const [trialDays, setTrialDays] = useState<number | null>(null)
+  // Trial States Updated (Days + Hours)
+  const [timeLeft, setTimeLeft] = useState<{days: number, hours: number} | null>(null)
   const [isExpired, setIsExpired] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(true)
 
@@ -68,21 +68,24 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter()
   const menuRef = useRef<HTMLDivElement>(null)
 
-  // ── Fetch Trial Status (TypeScript error resolved here) ──
-useEffect(() => {
+  // ── Fetch Trial Status (Days & Hours Logic) ──
+  useEffect(() => {
     getStoreTrialStatus().then((store: any) => {
       if (store && store.trialEndsAt) {
         setIsSubscribed(store.subscriptionActive)
         
         const end = new Date(store.trialEndsAt).getTime()
         const now = new Date().getTime()
-        const diff = Math.ceil((end - now) / (1000 * 3600 * 24))
+        const diff = end - now
 
         if (diff <= 0 && !store.subscriptionActive) {
           setIsExpired(true)
-          setTrialDays(0)
+          setTimeLeft({ days: 0, hours: 0 })
         } else {
-          setTrialDays(diff)
+          // Din aur Ghante calculate kiye
+          const d = Math.floor(diff / (1000 * 60 * 60 * 24))
+          const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+          setTimeLeft({ days: Math.max(0, d), hours: Math.max(0, h) })
         }
       }
     })
@@ -131,7 +134,7 @@ useEffect(() => {
 
   const sideW = collapsed ? 64 : 240
   const isBillingPage = pathname === "/dashboard/settings"
-  const showBanner = trialDays !== null && trialDays > 0 && trialDays <= 14 && !isSubscribed
+  const showBanner = timeLeft !== null && (timeLeft.days > 0 || timeLeft.hours > 0) && !isSubscribed
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#040408" }}>
@@ -399,6 +402,43 @@ useEffect(() => {
           </div>
         )}
 
+        {/* ── PLAN STATUS CARD (NAYA CODE YAHAN HAI) ── */}
+        {!collapsed && timeLeft !== null && (
+          <div style={{
+            margin: "0 10px 10px", padding: "12px",
+            background: isSubscribed ? "rgba(16, 185, 129, 0.05)" : "rgba(245, 158, 11, 0.05)",
+            border: `1px solid ${isSubscribed ? "rgba(16, 185, 129, 0.15)" : "rgba(245, 158, 11, 0.15)"}`,
+            borderRadius: 10,
+          }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: 6 }}>
+              <span style={{ fontSize: 11, fontWeight: 700, color: "#ececf1", textTransform: "uppercase", letterSpacing: "0.5px" }}>
+                {isSubscribed ? "Pro Plan" : "Free Trial"}
+              </span>
+              {!isSubscribed && (
+                 <Link href="/dashboard/settings" style={{ fontSize: 10, fontWeight: 600, color: "#f59e0b", textDecoration: "none" }}>Upgrade</Link>
+              )}
+            </div>
+
+            {isSubscribed ? (
+              <div style={{ fontSize: 11, color: "rgba(236,236,241,0.5)", lineHeight: 1.4 }}>
+                Your subscription is active.
+              </div>
+            ) : (
+              <>
+                <div style={{ fontSize: 11, color: "rgba(236,236,241,0.5)", marginBottom: 8 }}>
+                  Expires in <span style={{ color: "#f59e0b", fontWeight: 600 }}>{timeLeft.days}d {timeLeft.hours}h</span>
+                </div>
+                <div style={{ width: "100%", height: 4, background: "rgba(255,255,255,0.05)", borderRadius: 2, overflow: "hidden" }}>
+                  <div style={{
+                    width: `${Math.max(0, Math.min(100, (timeLeft.days / 14) * 100))}%`,
+                    height: "100%", background: "#f59e0b", borderRadius: 2
+                  }} />
+                </div>
+              </>
+            )}
+          </div>
+        )}
+
         <div ref={menuRef} style={{ padding: "8px 10px 10px", borderTop: "1px solid rgba(255,255,255,0.05)", position: "relative" }}>
           {userMenu && (
             <div className={`user-dropdown ${collapsed ? "collapsed" : ""}`}>
@@ -591,7 +631,7 @@ useEffect(() => {
         }}>
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <Zap style={{ width: 14, height: 14, color: "white" }} />
-            <span>Your free trial ends in {trialDays} {trialDays === 1 ? 'day' : 'days'}. To continue using Quadlix without interruption, please upgrade.</span>
+            <span>Your free trial ends in {timeLeft.days}d {timeLeft.hours}h. To continue using Quadlix without interruption, please upgrade.</span>
           </div>
           <Link href="/dashboard/settings" style={{
             background: "white", color: "#c2410c", padding: "5px 14px",
