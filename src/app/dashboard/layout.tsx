@@ -4,20 +4,20 @@ import { useState, useEffect, useRef } from "react"
 import Link from "next/link"
 import { usePathname, useRouter } from "next/navigation"
 import { createClient } from "@/utils/supabase/client"
+import { getStoreTrialStatus } from "../onboarding/actions"
 import "./dashboard.css"
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, Zap, Command, X, Palette,
-  User, CreditCard, HelpCircle, ChevronUp,
+  User, CreditCard, HelpCircle, ChevronUp, AlertCircle
 } from "lucide-react"
-
 
 type NavItem = {
   label: string;
   href: string;
   icon: any;
-  badge?: string; // <-- '?' ka matlab hai ye optional hai
+  badge?: string;
 };
 
 type NavGroup = {
@@ -25,7 +25,6 @@ type NavGroup = {
   items: NavItem[];
 };
 
-// 👇 2. NAV_GROUPS ke sath : NavGroup[] lagayen 👇
 const NAV_GROUPS: NavGroup[] = [
   {
     label: "Core",
@@ -59,9 +58,35 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [searchVal, setSearchVal] = useState("")
   const [userMenu, setUserMenu] = useState(false)
   const [time, setTime] = useState("")
+  
+  // Trial States
+  const [trialDays, setTrialDays] = useState<number | null>(null)
+  const [isExpired, setIsExpired] = useState(false)
+  const [isSubscribed, setIsSubscribed] = useState(true)
+
   const pathname = usePathname()
   const router = useRouter()
   const menuRef = useRef<HTMLDivElement>(null)
+
+  // ── Fetch Trial Status (TypeScript error resolved here) ──
+useEffect(() => {
+    getStoreTrialStatus().then((store: any) => {
+      if (store && store.trialEndsAt) {
+        setIsSubscribed(store.subscriptionActive)
+        
+        const end = new Date(store.trialEndsAt).getTime()
+        const now = new Date().getTime()
+        const diff = Math.ceil((end - now) / (1000 * 3600 * 24))
+
+        if (diff <= 0 && !store.subscriptionActive) {
+          setIsExpired(true)
+          setTrialDays(0)
+        } else {
+          setTrialDays(diff)
+        }
+      }
+    })
+  }, [])
 
   // Clock
   useEffect(() => {
@@ -105,9 +130,51 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     ?.label ?? "Dashboard"
 
   const sideW = collapsed ? 64 : 240
+  const isBillingPage = pathname === "/dashboard/settings"
+  const showBanner = trialDays !== null && trialDays > 0 && trialDays <= 14 && !isSubscribed
 
   return (
     <div style={{ display: "flex", minHeight: "100vh", background: "#040408" }}>
+
+      {/* ── EXPIRATION BLOCKER MODAL ── */}
+      {isExpired && !isBillingPage && (
+        <div style={{
+          position: "fixed", inset: 0, zIndex: 9999,
+          background: "rgba(4,4,8,0.85)", backdropFilter: "blur(12px)",
+          display: "flex", alignItems: "center", justifyContent: "center"
+        }}>
+          <div style={{
+            background: "#07071a", padding: 40, borderRadius: 20, maxWidth: 420,
+            border: "1px solid rgba(255,255,255,0.08)", textAlign: "center",
+            boxShadow: "0 20px 40px rgba(0,0,0,0.5)"
+          }}>
+            <div style={{
+              width: 64, height: 64, borderRadius: 18, background: "rgba(244,63,94,0.1)",
+              display: "flex", alignItems: "center", justifyContent: "center", margin: "0 auto 20px"
+            }}>
+              <AlertCircle style={{ width: 32, height: 32, color: "#f43f5e" }} />
+            </div>
+            <h2 style={{ fontSize: 22, color: "#ececf1", marginBottom: 12, fontWeight: 700 }}>Free Trial Expired</h2>
+            <p style={{ fontSize: 14.5, color: "rgba(236,236,241,0.6)", marginBottom: 28, lineHeight: 1.6 }}>
+              Your 14-day free trial has officially ended. To continue managing your Quadlix store and accessing AI features, please upgrade to a pro plan.
+            </p>
+            <Link href="/dashboard/settings" style={{
+              display: "inline-block", background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
+              color: "white", padding: "12px 32px", borderRadius: 10, fontWeight: 600,
+              textDecoration: "none", fontSize: 14, transition: "opacity 0.2s",
+              boxShadow: "0 8px 20px rgba(139,92,246,0.3)"
+            }}>
+              View Billing & Upgrade
+            </Link>
+            <button onClick={handleLogout} style={{
+               display: "block", width: "100%", background: "transparent", border: "none",
+               color: "rgba(236,236,241,0.4)", marginTop: 20, cursor: "pointer", fontSize: 13.5
+            }}>
+              Sign out of account
+            </button>
+          </div>
+        </div>
+      )}
 
       {/* ── SEARCH MODAL ── */}
       {searchOpen && (
@@ -168,7 +235,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       }}>
         <div className="sidebar-glow-line" />
 
-        {/* Ambient top orb */}
         <div style={{
           position: "absolute", top: -60, left: "50%", transform: "translateX(-50%)",
           width: 200, height: 200, borderRadius: "50%",
@@ -176,7 +242,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           filter: "blur(40px)", pointerEvents: "none",
         }} />
 
-        {/* ── Logo ── */}
         <div style={{
           height: 60, display: "flex", alignItems: "center",
           padding: collapsed ? "0 18px" : "0 18px",
@@ -207,12 +272,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           )}
         </div>
 
-        {/* ── Nav ── */}
         <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "16px 10px 8px" }}>
           {NAV_GROUPS.map((group, gi) => (
             <div key={gi} style={{ marginBottom: 8 }}>
-
-              {/* Group label */}
               {!collapsed && (
                 <div style={{
                   fontSize: 10, fontWeight: 600,
@@ -235,9 +297,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 const active = pathname === href || pathname.startsWith(href + "/")
                 return (
                   <Link
-                    key={href}
-                    href={href}
-                    prefetch={true}
+                    key={href} href={href} prefetch={true}
                     className={`nav-link ${active ? "active" : ""}`}
                     style={{
                       padding: collapsed ? "9px 0" : "8px 10px",
@@ -246,7 +306,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       gap: 10, marginBottom: 2,
                     }}
                   >
-                    {/* Active indicator */}
                     {active && (
                       <span style={{
                         position: "absolute", left: 0,
@@ -275,7 +334,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </span>
                     )}
 
-                    {/* Badge */}
                     {!collapsed && badge && (
                       <span className="ai-badge-pulse" style={{
                         fontSize: 9, fontWeight: 700,
@@ -288,18 +346,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                       </span>
                     )}
 
-                    {/* Tooltip */}
                     {collapsed && (
                       <div className="nav-tooltip" style={{
                         position: "absolute", left: "calc(100% + 12px)",
                         padding: "7px 12px", borderRadius: 8,
-                        background: "#12122a",
-                        border: "1px solid rgba(139,92,246,0.18)",
+                        background: "#12122a", border: "1px solid rgba(139,92,246,0.18)",
                         color: "#ececf1", fontSize: 12.5, fontWeight: 500,
                         whiteSpace: "nowrap", pointerEvents: "none",
                         opacity: 0, transition: "opacity 0.15s",
-                        boxShadow: "0 8px 24px rgba(0,0,0,0.5)",
-                        zIndex: 99,
+                        boxShadow: "0 8px 24px rgba(0,0,0,0.5)", zIndex: 99,
                       }}>
                         {label}
                         {badge && (
@@ -318,7 +373,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           ))}
         </nav>
 
-        {/* ── AI Status pill ── */}
         {!collapsed && (
           <div style={{
             margin: "0 10px 10px", padding: "10px 12px",
@@ -345,26 +399,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           </div>
         )}
 
-        {/* ── User section with dropdown ── */}
-        <div
-          ref={menuRef}
-          style={{
-            padding: "8px 10px 10px",
-            borderTop: "1px solid rgba(255,255,255,0.05)",
-            position: "relative",
-          }}
-        >
-          {/* User dropdown menu */}
+        <div ref={menuRef} style={{ padding: "8px 10px 10px", borderTop: "1px solid rgba(255,255,255,0.05)", position: "relative" }}>
           {userMenu && (
             <div className={`user-dropdown ${collapsed ? "collapsed" : ""}`}>
-              {/* User info header */}
-              <div style={{
-                padding: "14px 14px 10px",
-                borderBottom: "1px solid rgba(255,255,255,0.06)",
-              }}>
-                <div style={{
-                  display: "flex", alignItems: "center", gap: 10,
-                }}>
+              <div style={{ padding: "14px 14px 10px", borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
+                <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
                   <div style={{
                     width: 36, height: 36, borderRadius: 10, flexShrink: 0,
                     background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
@@ -379,34 +418,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 </div>
               </div>
 
-              {/* Menu items */}
               <div style={{ padding: "6px 0" }}>
                 <button className="dropdown-item">
-                  <User style={{ width: 14, height: 14, flexShrink: 0 }} />
-                  My Profile
+                  <User style={{ width: 14, height: 14, flexShrink: 0 }} /> My Profile
                 </button>
                 <Link href="/dashboard/settings" prefetch={true} className="dropdown-item" onClick={() => setUserMenu(false)}>
-                  <Settings style={{ width: 14, height: 14, flexShrink: 0 }} />
-                  Account Settings
+                  <Settings style={{ width: 14, height: 14, flexShrink: 0 }} /> Account Settings
                 </Link>
                 <button className="dropdown-item">
-                  <CreditCard style={{ width: 14, height: 14, flexShrink: 0 }} />
-                  Billing & Plans
+                  <CreditCard style={{ width: 14, height: 14, flexShrink: 0 }} /> Billing & Plans
                 </button>
                 <button className="dropdown-item">
-                  <HelpCircle style={{ width: 14, height: 14, flexShrink: 0 }} />
-                  Help & Support
+                  <HelpCircle style={{ width: 14, height: 14, flexShrink: 0 }} /> Help & Support
                 </button>
               </div>
 
               <div className="dropdown-sep" />
 
               <div style={{ padding: "6px 0 8px" }}>
-                <button
-                  className="dropdown-item danger"
-                  onClick={handleLogout}
-                  disabled={loggingOut}
-                >
+                <button className="dropdown-item danger" onClick={handleLogout} disabled={loggingOut}>
                   <LogOut style={{ width: 14, height: 14, flexShrink: 0 }} />
                   {loggingOut ? "Signing out..." : "Sign Out"}
                 </button>
@@ -414,7 +444,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             </div>
           )}
 
-          {/* User trigger button */}
           <button
             onClick={() => setUserMenu(p => !p)}
             style={{
@@ -423,17 +452,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               gap: 10, padding: collapsed ? "8px 0" : "8px 10px",
               borderRadius: 10, justifyContent: collapsed ? "center" : "flex-start",
               background: userMenu ? "rgba(139,92,246,0.08)" : "transparent",
-              transition: "background 0.15s",
-              fontFamily: "'Inter', sans-serif",
+              transition: "background 0.15s", fontFamily: "'Inter', sans-serif",
             }}
-            onMouseEnter={e => {
-              if (!userMenu) e.currentTarget.style.background = "rgba(255,255,255,0.05)"
-            }}
-            onMouseLeave={e => {
-              if (!userMenu) e.currentTarget.style.background = "transparent"
-            }}
+            onMouseEnter={e => { if (!userMenu) e.currentTarget.style.background = "rgba(255,255,255,0.05)" }}
+            onMouseLeave={e => { if (!userMenu) e.currentTarget.style.background = "transparent" }}
           >
-            {/* Avatar */}
             <div style={{
               width: 32, height: 32, borderRadius: 9, flexShrink: 0,
               background: "linear-gradient(135deg, #8b5cf6, #6d28d9)",
@@ -457,24 +480,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                   }}>Store Owner</div>
                 </div>
                 <ChevronUp style={{
-                  width: 14, height: 14,
-                  color: "rgba(236,236,241,0.25)",
+                  width: 14, height: 14, color: "rgba(236,236,241,0.25)",
                   transform: userMenu ? "rotate(0deg)" : "rotate(180deg)",
-                  transition: "transform 0.2s",
-                  flexShrink: 0,
+                  transition: "transform 0.2s", flexShrink: 0,
                 }} />
               </>
             )}
           </button>
 
-          {/* Collapse toggle */}
           <button
             onClick={() => setCollapsed(!collapsed)}
             style={{
               width: "100%", padding: "6px 0", marginTop: 4,
               display: "flex", alignItems: "center", justifyContent: "center", gap: 6,
-              borderRadius: 8, border: "none",
-              background: "transparent", cursor: "pointer",
+              borderRadius: 8, border: "none", background: "transparent", cursor: "pointer",
               color: "rgba(236,236,241,0.2)", fontSize: 11.5,
               transition: "all 0.15s", fontFamily: "'Inter', sans-serif",
             }}
@@ -487,10 +506,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               e.currentTarget.style.background = "transparent"
             }}
           >
-            {collapsed
-              ? <ChevronRight style={{ width: 14, height: 14 }} />
-              : <><ChevronLeft style={{ width: 14, height: 14 }} /><span>Collapse</span></>
-            }
+            {collapsed ? <ChevronRight style={{ width: 14, height: 14 }} /> : <><ChevronLeft style={{ width: 14, height: 14 }} /><span>Collapse</span></>}
           </button>
         </div>
       </aside>
@@ -498,74 +514,48 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
       {/* ── TOPBAR ── */}
       <header style={{
         position: "fixed", top: 0, right: 0, zIndex: 40, height: 60,
-        left: sideW,
-        background: "rgba(4,4,8,0.85)",
-        backdropFilter: "blur(20px) saturate(180%)",
+        left: sideW, background: "rgba(4,4,8,0.85)", backdropFilter: "blur(20px) saturate(180%)",
         borderBottom: "1px solid rgba(255,255,255,0.05)",
-        display: "flex", alignItems: "center",
-        padding: "0 24px", gap: 16,
+        display: "flex", alignItems: "center", padding: "0 24px", gap: 16,
         transition: "left 0.26s cubic-bezier(0.4,0,0.2,1)",
       }}>
-
-        {/* Breadcrumb */}
         <div style={{ display: "flex", alignItems: "center", gap: 6, fontSize: 13 }}>
           <span style={{ color: "rgba(236,236,241,0.3)" }}>Quadlix</span>
           <ChevronRight style={{ width: 12, height: 12, color: "rgba(236,236,241,0.15)" }} />
           <span style={{ color: "#ececf1", fontWeight: 500 }}>{currentPage}</span>
         </div>
 
-        {/* Search */}
         <button
-          onClick={() => setSearchOpen(true)}
-          className="topbar-search-btn"
+          onClick={() => setSearchOpen(true)} className="topbar-search-btn"
           style={{
-            flex: 1, maxWidth: 300, height: 34,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.07)",
-            borderRadius: 9, padding: "0 12px",
-            display: "flex", alignItems: "center", gap: 8,
-            cursor: "text", transition: "all 0.15s",
+            flex: 1, maxWidth: 300, height: 34, background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.07)", borderRadius: 9, padding: "0 12px",
+            display: "flex", alignItems: "center", gap: 8, cursor: "text", transition: "all 0.15s",
           }}
         >
           <Search style={{ width: 13, height: 13, color: "rgba(236,236,241,0.22)", flexShrink: 0 }} />
-          <span style={{ fontSize: 13, color: "rgba(236,236,241,0.2)", flex: 1, textAlign: "left" }}>
-            Search...
-          </span>
+          <span style={{ fontSize: 13, color: "rgba(236,236,241,0.2)", flex: 1, textAlign: "left" }}>Search...</span>
           <div style={{
-            display: "flex", alignItems: "center", gap: 2,
-            padding: "2px 5px", borderRadius: 4,
-            background: "rgba(255,255,255,0.05)",
-            border: "1px solid rgba(255,255,255,0.08)",
+            display: "flex", alignItems: "center", gap: 2, padding: "2px 5px", borderRadius: 4,
+            background: "rgba(255,255,255,0.05)", border: "1px solid rgba(255,255,255,0.08)",
           }}>
             <Command style={{ width: 9, height: 9, color: "rgba(236,236,241,0.25)" }} />
-            <span style={{
-              fontSize: 9.5, color: "rgba(236,236,241,0.25)",
-              fontFamily: "'JetBrains Mono', monospace",
-            }}>K</span>
+            <span style={{ fontSize: 9.5, color: "rgba(236,236,241,0.25)", fontFamily: "'JetBrains Mono', monospace" }}>K</span>
           </div>
         </button>
 
         <div style={{ marginLeft: "auto", display: "flex", alignItems: "center", gap: 8 }}>
-
-          {/* Clock */}
           <div style={{
-            padding: "4px 10px", borderRadius: 7,
-            background: "rgba(255,255,255,0.03)",
-            border: "1px solid rgba(255,255,255,0.06)",
-            fontFamily: "'JetBrains Mono', monospace",
+            padding: "4px 10px", borderRadius: 7, background: "rgba(255,255,255,0.03)",
+            border: "1px solid rgba(255,255,255,0.06)", fontFamily: "'JetBrains Mono', monospace",
             fontSize: 12, color: "rgba(236,236,241,0.35)",
           }}>{time}</div>
 
-          {/* AI Studio shortcut */}
           <Link
-            href="/dashboard/ai-studio"
-            prefetch={true}
-            className="ai-studio-btn"
+            href="/dashboard/ai-studio" prefetch={true} className="ai-studio-btn"
             style={{
-              display: "flex", alignItems: "center", gap: 6,
-              padding: "5px 12px", borderRadius: 8,
-              background: "rgba(139,92,246,0.08)",
-              border: "1px solid rgba(139,92,246,0.2)",
+              display: "flex", alignItems: "center", gap: 6, padding: "5px 12px", borderRadius: 8,
+              background: "rgba(139,92,246,0.08)", border: "1px solid rgba(139,92,246,0.2)",
               textDecoration: "none", transition: "all 0.15s",
             }}
           >
@@ -573,43 +563,62 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <span style={{ fontSize: 12, fontWeight: 600, color: "#a78bfa" }}>AI Studio</span>
           </Link>
 
-          {/* Notifications */}
           <button
             className="icon-btn"
             style={{
-              width: 34, height: 34, borderRadius: 8,
-              background: "rgba(255,255,255,0.03)",
-              border: "1px solid rgba(255,255,255,0.07)",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              cursor: "pointer", position: "relative",
-              transition: "all 0.15s", color: "rgba(236,236,241,0.38)",
+              width: 34, height: 34, borderRadius: 8, background: "rgba(255,255,255,0.03)",
+              border: "1px solid rgba(255,255,255,0.07)", display: "flex", alignItems: "center", justifyContent: "center",
+              cursor: "pointer", position: "relative", transition: "all 0.15s", color: "rgba(236,236,241,0.38)",
             }}
           >
             <Bell style={{ width: 15, height: 15 }} />
             <span style={{
-              position: "absolute", top: 7, right: 7,
-              width: 6, height: 6, borderRadius: "50%",
+              position: "absolute", top: 7, right: 7, width: 6, height: 6, borderRadius: "50%",
               background: "#8b5cf6", border: "1.5px solid #040408",
             }} />
           </button>
         </div>
       </header>
 
-      {/* ── MAIN ── */}
+      {/* ── TRIAL BANNER ── */}
+      {showBanner && (
+        <div style={{
+          position: "fixed", top: 60, left: sideW, right: 0, zIndex: 35,
+          background: "linear-gradient(90deg, #ea580c, #c2410c)",
+          padding: "8px 24px", color: "white", fontSize: 13, fontWeight: 500,
+          display: "flex", justifyContent: "space-between", alignItems: "center",
+          transition: "left 0.26s cubic-bezier(0.4,0,0.2,1)",
+        }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <Zap style={{ width: 14, height: 14, color: "white" }} />
+            <span>Your free trial ends in {trialDays} {trialDays === 1 ? 'day' : 'days'}. To continue using Quadlix without interruption, please upgrade.</span>
+          </div>
+          <Link href="/dashboard/settings" style={{
+            background: "white", color: "#c2410c", padding: "5px 14px",
+            borderRadius: 6, fontWeight: 700, fontSize: 12, textDecoration: "none",
+            boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
+          }}>
+            Upgrade Plan
+          </Link>
+        </div>
+      )}
+
+      {/* ── MAIN CONTENT ── */}
       <main
         className="page-wrap"
         style={{
-          flex: 1, minHeight: "100vh", paddingTop: 60,
+          flex: 1, minHeight: "100vh", 
+          paddingTop: showBanner ? 100 : 60,
           marginLeft: sideW,
-          transition: "margin-left 0.26s cubic-bezier(0.4,0,0.2,1)",
+          transition: "all 0.26s cubic-bezier(0.4,0,0.2,1)",
           background: "#040408",
         }}
       >
         <div style={{
-          position: "fixed", top: 60, left: sideW, right: 0, height: 1,
+          position: "fixed", top: showBanner ? 100 : 60, left: sideW, right: 0, height: 1,
           background: "linear-gradient(90deg, transparent 0%, rgba(139,92,246,0.1) 50%, transparent 100%)",
           pointerEvents: "none", zIndex: 30,
-          transition: "left 0.26s cubic-bezier(0.4,0,0.2,1)",
+          transition: "all 0.26s cubic-bezier(0.4,0,0.2,1)",
         }} />
         <div style={{ padding: "28px 28px" }}>
           {children}

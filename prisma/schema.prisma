@@ -29,6 +29,14 @@ model Store {
   themeConfig       Json?
   aiAssistantConfig Json?
   stripeConnectId   String?
+
+  // 👇 14-Day Free Trial Fields 👇
+  plan               String    @default("free_trial")
+  trialStartsAt      DateTime  @default(now())
+  trialEndsAt        DateTime?
+  subscriptionActive Boolean   @default(false)
+  // 👆 ─────────────────────── 👆
+
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt
 
@@ -83,19 +91,19 @@ model Customer {
 }
 
 model Order {
-  id                   String    @id @default(uuid())
-  storeId              String
-  customerId           String
-  totalAmount          Decimal   @db.Decimal(10, 2)
-  status               OrderStatus @default(PENDING)
+  id                    String    @id @default(uuid())
+  storeId               String
+  customerId            String
+  totalAmount           Decimal   @db.Decimal(10, 2)
+  status                OrderStatus @default(PENDING)
   stripePaymentIntentId String?
-  shippingAddress      Json?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  shippingAddress       Json?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
-  store                Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
-  customer             Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
-  orderItems           OrderItem[]
+  store                 Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  customer              Customer  @relation(fields: [customerId], references: [id], onDelete: Restrict)
+  orderItems            OrderItem[]
 
   @@index([storeId])
   @@index([customerId])
