@@ -1,18 +1,37 @@
 "use client"
 
-import { useState, useEffect } from "react"
+import { useState, useEffect, Suspense } from "react"
+import { useSearchParams } from "next/navigation"
 import { motion, AnimatePresence } from "framer-motion"
 import {
     Store, Globe, CreditCard, ShieldAlert, Save,
-    Loader2, CheckCircle2, ExternalLink, Mail, Phone, DollarSign
+    Loader2, CheckCircle2, Mail, Phone, DollarSign, Zap
 } from "lucide-react"
-import { getStoreSettings, updateStoreSettings } from "../settings/action"
+import { getStoreSettings, updateStoreSettings } from "./action"
 
+// ── SUSPENSE WRAPPER FOR USE_SEARCH_PARAMS ──
 export default function SettingsPage() {
-    const [activeTab, setActiveTab] = useState<"GENERAL" | "DOMAIN" | "PAYMENTS" | "ADVANCED">("GENERAL")
+    return (
+        <Suspense fallback={<div className="h-[80vh] flex items-center justify-center"><Loader2 className="size-10 animate-spin text-indigo-500" /></div>}>
+            <SettingsContent />
+        </Suspense>
+    )
+}
+
+function SettingsContent() {
+    const searchParams = useSearchParams()
+    const urlTab = searchParams.get("tab")?.toUpperCase()
+    const validTabs = ["GENERAL", "DOMAIN", "PAYMENTS", "BILLING", "ADVANCED"]
+    const initialTab: any = validTabs.includes(urlTab || "") ? urlTab : "GENERAL"
+
+    const [activeTab, setActiveTab] = useState<"GENERAL" | "DOMAIN" | "PAYMENTS" | "BILLING" | "ADVANCED">(initialTab)
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [saveStatus, setSaveStatus] = useState<"IDLE" | "SAVED" | "ERROR">("IDLE")
+
+    // Trial & Billing State
+    const [trialDays, setTrialDays] = useState(0)
+    const [isSubscribed, setIsSubscribed] = useState(false)
 
     // Empty state jo database se bhar jayega
     const [formData, setFormData] = useState({
@@ -20,6 +39,12 @@ export default function SettingsPage() {
         domain: { subdomain: "", customDomain: "" },
         payments: { stripePublicKey: "", stripeSecretKey: "" }
     })
+
+    // URL parameter change hone par tab change karein
+    useEffect(() => {
+        const tab = searchParams.get("tab")?.toUpperCase()
+        if (tab && validTabs.includes(tab)) setActiveTab(tab as any)
+    }, [searchParams])
 
     // ── 1. DATABASE SE DATA FETCH KAREIN ──
     useEffect(() => {
@@ -29,7 +54,7 @@ export default function SettingsPage() {
                 setFormData({
                     general: {
                         storeName: res.store.name || "",
-                        email: (res.store as any).email || "", // Type casting taake error na aaye
+                        email: (res.store as any).email || "", 
                         phone: (res.store as any).phone || "",
                         currency: "USD",
                     },
@@ -42,6 +67,14 @@ export default function SettingsPage() {
                         stripeSecretKey: (res.store as any).stripeSecretKey || "",
                     }
                 })
+
+                // Set Trial and Billing Status
+                setIsSubscribed((res.store as any).subscriptionActive || false)
+                if ((res.store as any).trialEndsAt && !(res.store as any).subscriptionActive) {
+                    const diff = new Date((res.store as any).trialEndsAt).getTime() - new Date().getTime()
+                    const d = Math.ceil(diff / (1000 * 3600 * 24))
+                    setTrialDays(Math.max(0, d))
+                }
             }
             setIsLoading(false)
         }
@@ -105,6 +138,7 @@ export default function SettingsPage() {
                         <TabButton active={activeTab === "GENERAL"} onClick={() => setActiveTab("GENERAL")} icon={Store} label="General Settings" />
                         <TabButton active={activeTab === "DOMAIN"} onClick={() => setActiveTab("DOMAIN")} icon={Globe} label="Domains & URLs" />
                         <TabButton active={activeTab === "PAYMENTS"} onClick={() => setActiveTab("PAYMENTS")} icon={CreditCard} label="Payment Providers" />
+                        <TabButton active={activeTab === "BILLING"} onClick={() => setActiveTab("BILLING")} icon={Zap} label="Billing & Plans" />
                         <div className="h-px w-full bg-white/5 my-2" />
                         <TabButton active={activeTab === "ADVANCED"} onClick={() => setActiveTab("ADVANCED")} icon={ShieldAlert} label="Danger Zone" danger />
                     </nav>
@@ -177,7 +211,6 @@ export default function SettingsPage() {
                                                     </div>
                                                 </div>
                                             )}
-
                                         </div>
                                     </div>
                                 </div>
@@ -193,6 +226,61 @@ export default function SettingsPage() {
                                     <div className="relative z-10 space-y-6 max-w-xl">
                                         <InputField label="Stripe Public Key" icon={CreditCard} value={formData.payments.stripePublicKey} onChange={(val) => handleChange("payments", "stripePublicKey", val)} placeholder="pk_live_..." />
                                         <InputField label="Stripe Secret Key" icon={ShieldAlert} value={formData.payments.stripeSecretKey} onChange={(val) => handleChange("payments", "stripeSecretKey", val)} placeholder="sk_live_..." type="password" />
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* BILLING & PLANS SETTINGS (NAYA TAB) */}
+                        {activeTab === "BILLING" && (
+                            <motion.div key="billing" initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, y: -10 }} className="space-y-8">
+                                <SectionHeader title="Billing & Plans" description="Manage your subscription and usage." />
+
+                                {/* Current Plan Overview */}
+                                <div className="bg-gradient-to-br from-violet-500/10 to-purple-700/5 border border-violet-500/20 rounded-3xl p-8">
+                                    <div className="flex flex-col md:flex-row md:items-start justify-between mb-8 gap-6">
+                                        <div>
+                                            <div className="flex items-center gap-3 mb-2">
+                                                <h2 className="text-xl font-bold text-[#ececf1]">
+                                                    {isSubscribed ? "Pro Plan" : "Free Trial"}
+                                                </h2>
+                                                {isSubscribed ? (
+                                                    <span className="bg-emerald-500/15 text-emerald-500 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider">ACTIVE</span>
+                                                ) : (
+                                                    <span className="bg-amber-500/15 text-amber-500 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wider">TRIAL</span>
+                                                )}
+                                            </div>
+                                            <p className="text-white/50 text-sm leading-relaxed max-w-md">
+                                                {isSubscribed
+                                                    ? "You are currently on the Pro plan with full access to all AI Commerce features."
+                                                    : `Your free trial ends in ${trialDays} days. Upgrade now to avoid store suspension.`}
+                                            </p>
+                                        </div>
+                                        {!isSubscribed && (
+                                            <div className="md:text-right">
+                                                <div className="text-3xl font-bold text-white">$29<span className="text-sm text-white/40 font-medium">/mo</span></div>
+                                            </div>
+                                        )}
+                                    </div>
+
+                                    {!isSubscribed && (
+                                        <button className="w-full bg-white text-black border-none py-3.5 rounded-xl text-sm font-bold flex items-center justify-center gap-2 shadow-lg shadow-white/10 hover:bg-gray-200 transition-colors">
+                                            <Zap className="size-4 text-black" />
+                                            Upgrade to Pro Plan
+                                        </button>
+                                    )}
+                                </div>
+
+                                {/* Pro Features */}
+                                <div className="bg-[#0a0a0c] border border-white/5 rounded-3xl p-8">
+                                    <h3 className="text-base font-bold text-white mb-6">Pro Plan Features</h3>
+                                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
+                                        {["Unlimited Products & Orders", "Custom Domain Support", "Advanced AI Studio Access", "0% Transaction Fees", "Priority 24/7 Support", "Automated SEO Generation"].map((feat, i) => (
+                                            <div key={i} className="flex items-center gap-3">
+                                                <CheckCircle2 className="size-4 text-emerald-500" />
+                                                <span className="text-sm text-white/70">{feat}</span>
+                                            </div>
+                                        ))}
                                     </div>
                                 </div>
                             </motion.div>
