@@ -74,8 +74,8 @@ export default async function DashboardPage() {
   ])
 
   // ── Revenue calculations ──────────────────────────────────────────────────
-  const revThis = ordersThisMonth.reduce((s: number, o: { totalAmount: any }) => s + Number(o.totalAmount ?? 0), 0)
-  const revLast = ordersLastMonth.reduce((s: number, o: { totalAmount: any }) => s + Number(o.totalAmount ?? 0), 0)
+  const revThis = ordersThisMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
+  const revLast = ordersLastMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
   const revDiff = revLast === 0 ? 0 : ((revThis - revLast) / revLast) * 100
   const ordDiff = ordersLastMonth.length === 0 ? 0
     : ((ordersThisMonth.length - ordersLastMonth.length) / ordersLastMonth.length) * 100
@@ -89,26 +89,26 @@ export default async function DashboardPage() {
       const rows = await prisma.order.findMany({
         where: { storeId: store.id, createdAt: { gte: start, lte: end } },
       })
-      return rows.reduce((s: number, o: { totalAmount: any }) => s + Number(o.totalAmount ?? 0), 0)
+      return rows.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
     })
   )
   const maxRev = Math.max(...monthlyRaw, 1)
   const chartData = monthlyRaw.map((v: number) => Math.max(Math.round((v / maxRev) * 95), 4))
 
   // ── Format recent orders ──────────────────────────────────────────────────
-  const formattedOrders = recentOrders.map((o: { id: string; orderItems: { product: { name: any } }[]; totalAmount: any; status: any; createdAt: Date }) => ({
+  const formattedOrders = recentOrders.map((o: any) => ({
     id: `#${o.id.slice(-4).toUpperCase()}`,
-    customer: (o as any).customerName ?? (o as any).customerEmail ?? (o as any).customer ?? "Unknown",
-    product: o.orderItems?.[0]?.product?.name ?? "—",
-    amount: `$${Number(o.totalAmount ?? 0).toFixed(2)}`,
-    status: o.status ?? "Pending",
+    customer: o.customerName ?? o.customerEmail ?? o.customer ?? "Unknown",
+    product: o.orderItems?.[0]?.product?.title ?? "—", // name ki jagah title kiya
+    amount: `$${Number(o.totalAmount ?? 0).toLocaleString()}`,
+    status: o.status,
     time: timeAgo(o.createdAt),
   }))
 
   // ── Format top products ───────────────────────────────────────────────────
-  const maxSales = Math.max(...topProducts.map((p: { orderItems: string | any[] }) => p.orderItems.length), 1)
-  const formattedTop = topProducts.map((p: { name: any; orderItems: any[] }) => ({
-    name: p.name,
+  const maxSales = Math.max(...topProducts.map((p: any) => p.orderItems.length), 1)
+  const formattedTop = topProducts.map((p: any) => ({
+    name: p.title, // Yahan bhi p.name ki jagah p.title aayega
     sales: p.orderItems.length,
     revenue: `$${p.orderItems.reduce((s: number, oi: any) => s + Number(oi.price ?? oi.unitPrice ?? 0), 0).toLocaleString()}`,
     pct: Math.max(Math.round((p.orderItems.length / maxSales) * 95), 4),
