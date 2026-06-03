@@ -87,4 +87,4 @@ export default async function ProductDetailPage({
       domain={domain} 
     />
   )
-}
+} 

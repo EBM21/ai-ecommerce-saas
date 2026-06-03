@@ -620,29 +620,6 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
       </header>
 
-      {/* ── TRIAL BANNER ── */}
-      {showBanner && (
-        <div style={{
-          position: "fixed", top: 60, left: sideW, right: 0, zIndex: 35,
-          background: "linear-gradient(90deg, #ea580c, #c2410c)",
-          padding: "8px 24px", color: "white", fontSize: 13, fontWeight: 500,
-          display: "flex", justifyContent: "space-between", alignItems: "center",
-          transition: "left 0.26s cubic-bezier(0.4,0,0.2,1)",
-        }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <Zap style={{ width: 14, height: 14, color: "white" }} />
-            <span>Your free trial ends in {timeLeft.days}d {timeLeft.hours}h. To continue using Quadlix without interruption, please upgrade.</span>
-          </div>
-          <Link href="/dashboard/settings" style={{
-            background: "white", color: "#c2410c", padding: "5px 14px",
-            borderRadius: 6, fontWeight: 700, fontSize: 12, textDecoration: "none",
-            boxShadow: "0 2px 8px rgba(0,0,0,0.15)"
-          }}>
-            Upgrade Plan
-          </Link>
-        </div>
-      )}
-
       {/* ── MAIN CONTENT ── */}
       <main
         className="page-wrap"
