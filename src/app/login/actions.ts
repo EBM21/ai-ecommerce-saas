@@ -2,11 +2,22 @@
 
 import { revalidatePath } from 'next/cache'
 import { createClient } from '@/utils/supabase/server'
+import { z } from 'zod'
+
+const authSchema = z.object({
+  email: z.string().email('Invalid email address'),
+  password: z.string().min(6, 'Password must be at least 6 characters long'),
+})
 
 export async function login(data: { email: string; password: string }) {
+  const validated = authSchema.safeParse(data)
+  if (!validated.success) {
+    return { success: false, error: validated.error.issues[0].message }
+  }
+
   const supabase = await createClient()
 
-  const { error, data: authData } = await supabase.auth.signInWithPassword(data)
+  const { error, data: authData } = await supabase.auth.signInWithPassword(validated.data)
 
   if (error) {
     return { success: false, error: error.message }
@@ -18,10 +29,15 @@ export async function login(data: { email: string; password: string }) {
 }
 
 export async function signup(data: { email: string; password: string }) {
+  const validated = authSchema.safeParse(data)
+  if (!validated.success) {
+    return { success: false, error: validated.error.issues[0].message }
+  }
+
   const supabase = await createClient()
 
   // Supabase often requires email confirmation by default depending on project settings.
-  const { error, data: authData } = await supabase.auth.signUp(data)
+  const { error, data: authData } = await supabase.auth.signUp(validated.data)
 
   if (error) {
     return { success: false, error: error.message }

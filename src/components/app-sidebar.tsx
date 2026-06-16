@@ -14,7 +14,9 @@ import {
   SidebarMenu,
   SidebarMenuButton,
   SidebarMenuItem,
+  SidebarFooter,
 } from "@/components/ui/sidebar"
+import { ThemeToggle } from "./theme-toggle"
 
 const data = {
   navMain: [
@@ -82,6 +84,12 @@ export function AppSidebar() {
           </SidebarGroupContent>
         </SidebarGroup>
       </SidebarContent>
+      <SidebarFooter className="p-4 border-t border-sidebar-border">
+        <div className="flex items-center justify-between">
+          <span className="text-xs text-muted-foreground font-medium">Appearance</span>
+          <ThemeToggle />
+        </div>
+      </SidebarFooter>
     </Sidebar>
   )
 }

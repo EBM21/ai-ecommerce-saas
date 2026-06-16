@@ -18,6 +18,18 @@ export default async function DashboardPage() {
   if (!store) redirect("/onboarding")
 
   // ── Date ranges ───────────────────────────────────────────────────────────
+  let currency = "USD"
+  if (store.themeConfig) {
+      try {
+          const raw = typeof store.themeConfig === 'string'
+              ? JSON.parse(store.themeConfig as string)
+              : store.themeConfig
+          currency = raw.branding?.currency || "USD"
+      } catch (e) { }
+  }
+  const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency, minimumFractionDigits: 2 }).format(val)
+  const formatMoneyNoDecimals = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(val)
+
   const now = new Date()
   const startThisMonth = new Date(now.getFullYear(), now.getMonth(), 1)
   const startLastMonth = new Date(now.getFullYear(), now.getMonth() - 1, 1)
@@ -35,12 +47,12 @@ export default async function DashboardPage() {
 
     // Orders this month
     prisma.order.findMany({
-      where: { storeId: store.id, createdAt: { gte: startThisMonth } },
+      where: { storeId: store.id, createdAt: { gte: startThisMonth }, status: { in: ['PAID', 'FULFILLED'] } },
     }),
 
     // Orders last month
     prisma.order.findMany({
-      where: { storeId: store.id, createdAt: { gte: startLastMonth, lte: endLastMonth } },
+      where: { storeId: store.id, createdAt: { gte: startLastMonth, lte: endLastMonth }, status: { in: ['PAID', 'FULFILLED'] } },
     }),
 
     // Recent 5 orders with items + product name
@@ -61,13 +73,13 @@ export default async function DashboardPage() {
 
     // New products this month
     prisma.product.count({
-      where: { storeId: store.id, createdAt: { gte: startThisMonth } },
+      where: { storeId: store.id, createdAt: { gte: startThisMonth }, status: 'ACTIVE' },
     }),
 
     // Top products by sales
     prisma.product.findMany({
       where: { storeId: store.id },
-      include: { orderItems: true },
+      include: { orderItems: { where: { order: { status: { in: ['PAID', 'FULFILLED'] } } } } },
       orderBy: { orderItems: { _count: "desc" } },
       take: 4,
     }),
@@ -76,9 +88,8 @@ export default async function DashboardPage() {
   // ── Revenue calculations ──────────────────────────────────────────────────
   const revThis = ordersThisMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
   const revLast = ordersLastMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
-  const revDiff = revLast === 0 ? 0 : ((revThis - revLast) / revLast) * 100
-  const ordDiff = ordersLastMonth.length === 0 ? 0
-    : ((ordersThisMonth.length - ordersLastMonth.length) / ordersLastMonth.length) * 100
+  const revDiff = revLast === 0 ? (revThis > 0 ? 100 : 0) : ((revThis - revLast) / revLast) * 100
+  const ordDiff = ordersLastMonth.length === 0 ? (ordersThisMonth.length > 0 ? 100 : 0) : ((ordersThisMonth.length - ordersLastMonth.length) / ordersLastMonth.length) * 100
   const conv = totalProducts === 0 ? 0 : (ordersThisMonth.length / totalProducts) * 100
 
   // ── Monthly chart — last 12 months ────────────────────────────────────────
@@ -87,20 +98,28 @@ export default async function DashboardPage() {
       const start = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
       const end = new Date(now.getFullYear(), now.getMonth() - (11 - i) + 1, 0)
       const rows = await prisma.order.findMany({
-        where: { storeId: store.id, createdAt: { gte: start, lte: end } },
+        where: { storeId: store.id, createdAt: { gte: start, lte: end }, status: { in: ['PAID', 'FULFILLED'] } },
       })
       return rows.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
     })
   )
   const maxRev = Math.max(...monthlyRaw, 1)
-  const chartData = monthlyRaw.map((v: number) => Math.max(Math.round((v / maxRev) * 95), 4))
+  const chartData = monthlyRaw.map((v: number, i: number) => {
+    const d = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
+    const month = d.toLocaleString('default', { month: 'short' })
+    return {
+      height: Math.max(Math.round((v / maxRev) * 95), 4),
+      value: formatMoney(v),
+      month
+    }
+  })
 
   // ── Format recent orders ──────────────────────────────────────────────────
   const formattedOrders = recentOrders.map((o: any) => ({
     id: `#${o.id.slice(-4).toUpperCase()}`,
     customer: o.customerName ?? o.customerEmail ?? o.customer ?? "Unknown",
     product: o.orderItems?.[0]?.product?.title ?? "—", // name ki jagah title kiya
-    amount: `$${Number(o.totalAmount ?? 0).toLocaleString()}`,
+    amount: formatMoney(Number(o.totalAmount ?? 0)),
     status: o.status,
     time: timeAgo(o.createdAt),
   }))
@@ -110,7 +129,7 @@ export default async function DashboardPage() {
   const formattedTop = topProducts.map((p: any) => ({
     name: p.title, // Yahan bhi p.name ki jagah p.title aayega
     sales: p.orderItems.length,
-    revenue: `$${p.orderItems.reduce((s: number, oi: any) => s + Number(oi.price ?? oi.unitPrice ?? 0), 0).toLocaleString()}`,
+    revenue: formatMoney(p.orderItems.reduce((s: number, oi: any) => s + Number(oi.priceAtPurchase ?? oi.price ?? oi.unitPrice ?? 0), 0)),
     pct: Math.max(Math.round((p.orderItems.length / maxSales) * 95), 4),
   }))
 
@@ -119,7 +138,7 @@ export default async function DashboardPage() {
       storeName={store.name}
       stats={{
         revenue: {
-          value: `$${revThis.toLocaleString(undefined, { maximumFractionDigits: 0 })}`,
+          value: formatMoneyNoDecimals(revThis),
           change: `${revDiff >= 0 ? "+" : ""}${revDiff.toFixed(1)}%`,
           up: revDiff >= 0,
         },

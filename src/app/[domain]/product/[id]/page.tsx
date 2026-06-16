@@ -11,9 +11,17 @@ export async function generateMetadata({ params }: { params: Promise<{ domain: s
 
   if (!product) return { title: 'Product Not Found' }
 
+  const seo = typeof product.seoMeta === 'string' ? JSON.parse(product.seoMeta) : (product.seoMeta || {})
+
   return {
-    title: `${product.title} | Premium Edition`,
-    description: product.description?.substring(0, 150),
+    title: seo.title || `${product.title} | Premium Edition`,
+    description: seo.description || product.description?.substring(0, 160),
+    keywords: seo.keywords || undefined,
+    openGraph: {
+      title: seo.title || product.title,
+      description: seo.description || product.description?.substring(0, 160),
+      images: Array.isArray(product.images) ? product.images[0] : undefined
+    }
   }
 }
 
@@ -36,15 +44,23 @@ export default async function ProductDetailPage({
 
   if (!store) notFound()
 
-  const product = await prisma.product.findFirst({
-    where: {
-      id,
-      storeId: store.id,
-      status: 'ACTIVE'
-    }
+  const product = await prisma.product.findUnique({
+    where: { id },
+    include: { variants: true }
   })
 
-  if (!product) notFound()
+  if (!product || product.storeId !== store.id || product.status !== 'ACTIVE') notFound()
+
+  // Ensure price fields are numbers for the client
+  const formattedProduct = {
+    ...product,
+    price: Number(product.price),
+    compareAtPrice: product.compareAtPrice ? Number(product.compareAtPrice) : null,
+    variants: product.variants.map(v => ({
+      ...v,
+      price: v.price ? Number(v.price) : null
+    }))
+  }
 
   // Safely parse the images JSON into a clean Array
   let imageArray: string[] = []
@@ -79,12 +95,27 @@ export default async function ProductDetailPage({
     imageArray.push('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80')
   }
 
+  // Parse & merge config
+  const defaults = { layoutId: 'nova' } // Basic fallback
+  let theme: any = defaults
+  if (store.themeConfig) {
+    try {
+      theme = typeof store.themeConfig === 'string'
+        ? JSON.parse(store.themeConfig as string)
+        : store.themeConfig
+    } catch (e) {
+      console.error("Product Page: theme parse error", e)
+    }
+  }
+
   // Naye Client Component ko call karein aur saara processed data pass kar dein
   return (
     <ProductClient 
-      product={product} 
+      product={formattedProduct} 
       images={imageArray} 
       domain={domain} 
+      theme={theme}
     />
   )
 } 
+ 

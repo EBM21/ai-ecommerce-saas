@@ -7,16 +7,19 @@ export async function middleware(request: NextRequest) {
 
   // Define the base domains
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
-  const isVercel = hostname.endsWith('.quadlix.com') // <-- Vercel domain ko identify kiya
-  
   const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
 
   // Parse the subdomain
-  let currentHost = hostname.replace(`.${baseDomain}`, "")
+  const currentHost = hostname.replace(`.${baseDomain}`, "")
   
   // ── Main SaaS Dashboard Check ──
-  // Agar URL Vercel ka hai, base domain hai, ya 'app' subdomain hai
-  if (currentHost === baseDomain || currentHost === 'app' || isVercel) {
+  // We are on the dashboard if:
+  // 1. Host is exactly the base domain (e.g., quadlix.com)
+  // 2. Host is the 'app' subdomain (e.g., app.quadlix.com)
+  // 3. Or it's the specific Vercel deployment URL (if configured)
+  const isDashboard = hostname === baseDomain || hostname === `app.${baseDomain}` || hostname === 'ai-ecommerce-saas.vercel.app'
+
+  if (isDashboard) {
     // We are on the SaaS dashboard. Run the auth middleware.
     return await updateSession(request)
   }
@@ -26,7 +29,8 @@ export async function middleware(request: NextRequest) {
   if (
     url.pathname.startsWith('/_next') || 
     url.pathname.startsWith('/api') ||
-    url.pathname.startsWith('/static')
+    url.pathname.startsWith('/static') ||
+    url.pathname.startsWith(`/${currentHost}`) // Prevent double rewrite
   ) {
     return NextResponse.next()
   }
@@ -40,4 +44,4 @@ export const config = {
   matcher: [
     '/((?!_next/static|_next/image|favicon.ico|.*\\.(?:svg|png|jpg|jpeg|gif|webp)$).*)',
   ],
-} 
+}

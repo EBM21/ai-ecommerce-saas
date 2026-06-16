@@ -8,6 +8,7 @@ import {
   Package, ChevronRight, CheckCircle2, Eye, EyeOff
 } from 'lucide-react'
 import { login, signup } from './actions'
+import { ThemeToggle } from '@/components/theme-toggle'
 
 // ─── Live ticker data shown on right panel ───────────────────────────────────
 const TICKER_ITEMS = [
@@ -107,8 +108,8 @@ export default function LoginPage() {
 
   return (
     <div
-      className="min-h-screen flex overflow-hidden"
-      style={{ background: '#080810', fontFamily: "'Inter var', 'Inter', sans-serif" }}
+      className="min-h-screen flex overflow-hidden bg-background"
+      style={{ fontFamily: "'Inter var', 'Inter', sans-serif" }}
     >
       {/* ══════════════════════════════════════════════════════════════════
           LEFT — Form panel
@@ -135,9 +136,9 @@ export default function LoginPage() {
                 boxShadow: '0 0 24px rgba(99,102,241,0.45)',
               }}
             >
-              <Sparkles className="size-4 text-white" strokeWidth={2} />
+              <Sparkles className="size-4 text-foreground" strokeWidth={2} />
             </div>
-            <span className="text-white font-semibold text-[17px] tracking-tight">Quadlix</span>
+            <span className="text-foreground font-semibold text-[17px] tracking-tight">Quadlix</span>
             <span
               className="text-[11px] font-medium px-2 py-0.5 rounded-full ml-1"
               style={{ background: 'rgba(99,102,241,0.15)', color: '#818cf8', border: '1px solid rgba(99,102,241,0.3)' }}
@@ -146,21 +147,24 @@ export default function LoginPage() {
             </span>
           </div>
 
-          {/* Toggle link */}
-          <button
-            onClick={() => setIsLogin(!isLogin)}
-            disabled={isLoading}
-            className="flex items-center gap-1.5 text-[13px] transition-colors"
-            style={{ color: '#6b7280' }}
-            onMouseEnter={e => (e.currentTarget.style.color = '#a5b4fc')}
-            onMouseLeave={e => (e.currentTarget.style.color = '#6b7280')}
-          >
-            {isLogin ? 'New here?' : 'Have an account?'}
-            <span style={{ color: '#818cf8', fontWeight: 500 }}>
-              {isLogin ? 'Sign up' : 'Sign in'}
-            </span>
-            <ChevronRight className="size-3.5" style={{ color: '#818cf8' }} />
-          </button>
+          <div className="flex items-center gap-4">
+            <ThemeToggle />
+            {/* Toggle link */}
+            <button
+              onClick={() => setIsLogin(!isLogin)}
+              disabled={isLoading}
+              className="flex items-center gap-1.5 text-[13px] transition-colors"
+              style={{ color: 'var(--muted-foreground)' }}
+              onMouseEnter={e => (e.currentTarget.style.color = '#a5b4fc')}
+              onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground)')}
+            >
+              {isLogin ? 'New here?' : 'Have an account?'}
+              <span style={{ color: '#818cf8', fontWeight: 500 }}>
+                {isLogin ? 'Sign up' : 'Sign in'}
+              </span>
+              <ChevronRight className="size-3.5" style={{ color: '#818cf8' }} />
+            </button>
+          </div>
         </div>
 
         {/* Main form area */}
@@ -188,10 +192,10 @@ export default function LoginPage() {
                     <CheckCircle2 className="size-9" style={{ color: '#818cf8' }} strokeWidth={1.5} />
                   </div>
                   <div>
-                    <h2 className="text-3xl font-bold text-white mb-3 tracking-tight">Check your inbox</h2>
-                    <p className="text-[15px] leading-relaxed" style={{ color: '#6b7280' }}>
+                    <h2 className="text-3xl font-bold text-foreground mb-3 tracking-tight">Check your inbox</h2>
+                    <p className="text-[15px] leading-relaxed text-muted-foreground">
                       We sent a link to{' '}
-                      <span style={{ color: '#a5b4fc', fontWeight: 500 }}>{email}</span>.
+                      <span className="text-indigo-500 dark:text-indigo-400 font-medium">{email}</span>.
                       <br />Click it to activate your store.
                     </p>
                   </div>
@@ -235,17 +239,16 @@ export default function LoginPage() {
                         animate={{ opacity: 1, y: 0 }}
                         exit={{ opacity: 0, y: -10 }}
                         transition={{ duration: 0.25 }}
-                        className="text-[38px] font-bold tracking-tight leading-[1.1]"
-                        style={{ color: '#f9fafb' }}
+                        className="text-[38px] font-bold tracking-tight leading-[1.1] text-foreground"
                       >
                         {isLogin ? (
-                          <>Sign in to<br /><span style={{ color: '#818cf8' }}>your store</span></>
+                          <>Sign in to<br /><span className="text-indigo-500 dark:text-indigo-400">your store</span></>
                         ) : (
-                          <>Launch your<br /><span style={{ color: '#818cf8' }}>AI storefront</span></>
+                          <>Launch your<br /><span className="text-indigo-500 dark:text-indigo-400">AI storefront</span></>
                         )}
                       </motion.h1>
                     </AnimatePresence>
-                    <p className="text-[14px] mt-2" style={{ color: '#4b5563' }}>
+                    <p className="text-[14px] mt-2 text-muted-foreground">
                       {isLogin
                         ? 'Enter your credentials to continue to the dashboard.'
                         : 'Join 9,200+ merchants scaling with AI-powered commerce.'}
@@ -267,7 +270,7 @@ export default function LoginPage() {
                         <label
                           htmlFor="password"
                           className="text-[12px] font-medium tracking-wide"
-                          style={{ color: '#6b7280' }}
+                          style={{ color: 'var(--muted-foreground)' }}
                         >
                           PASSWORD
                         </label>
@@ -294,9 +297,9 @@ export default function LoginPage() {
                           required
                           className="w-full h-12 rounded-xl px-4 pr-12 text-[14px] outline-none transition-all"
                           style={{
-                            background: 'rgba(255,255,255,0.04)',
-                            border: '1px solid rgba(255,255,255,0.08)',
-                            color: '#f9fafb',
+                            background: 'var(--secondary)',
+                            border: '1px solid var(--border)',
+                            color: 'var(--foreground)',
                             caretColor: '#818cf8',
                           }}
                           onFocus={e => {
@@ -305,8 +308,8 @@ export default function LoginPage() {
                             e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.1)'
                           }}
                           onBlur={e => {
-                            e.target.style.border = '1px solid rgba(255,255,255,0.08)'
-                            e.target.style.background = 'rgba(255,255,255,0.04)'
+                            e.target.style.border = '1px solid var(--border)'
+                            e.target.style.background = 'var(--secondary)'
                             e.target.style.boxShadow = 'none'
                           }}
                         />
@@ -314,9 +317,9 @@ export default function LoginPage() {
                           type="button"
                           onClick={() => setShowPassword(!showPassword)}
                           className="absolute right-3.5 top-1/2 -translate-y-1/2 transition-colors"
-                          style={{ color: '#4b5563' }}
+                          style={{ color: 'var(--muted-foreground)' }}
                           onMouseEnter={e => (e.currentTarget.style.color = '#818cf8')}
-                          onMouseLeave={e => (e.currentTarget.style.color = '#4b5563')}
+                          onMouseLeave={e => (e.currentTarget.style.color = 'var(--muted-foreground)')}
                         >
                           {showPassword
                             ? <EyeOff className="size-4" />
@@ -332,10 +335,10 @@ export default function LoginPage() {
                         type="submit"
                         disabled={isLoading}
                         whileTap={{ scale: 0.98 }}
-                        className="relative w-full h-12 rounded-xl font-semibold text-[15px] text-white overflow-hidden flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
+                        className="relative w-full h-12 rounded-xl font-semibold text-[15px] text-foreground overflow-hidden flex items-center justify-center gap-2.5 disabled:opacity-60 disabled:cursor-not-allowed transition-opacity"
                         style={{
                           background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-                          boxShadow: '0 0 32px rgba(99,102,241,0.4), inset 0 1px 0 rgba(255,255,255,0.1)',
+                          boxShadow: '0 0 32px rgba(99,102,241,0.4), inset 0 1px 0 var(--border)',
                         }}
                       >
                         {/* Shine sweep */}
@@ -374,24 +377,24 @@ export default function LoginPage() {
                               <img
                                 key={i}
                                 src={`https://i.pravatar.cc/32${u}`}
-                                className="size-7 rounded-full ring-2 ring-[#080810]"
+                                className="size-7 rounded-full ring-2 ring-[var(--background)]"
                                 alt=""
                               />
                             ))}
                           </div>
-                          <p className="text-[12px]" style={{ color: '#4b5563' }}>
-                            <span style={{ color: '#9ca3af', fontWeight: 500 }}>9,200+ merchants</span> already on Quadlix
+                          <p className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>
+                            <span style={{ color: 'var(--muted-foreground)', fontWeight: 500 }}>9,200+ merchants</span> already on Quadlix
                           </p>
                         </motion.div>
                       )}
                     </AnimatePresence>
 
                     {/* Terms */}
-                    <p className="text-[11px] text-center" style={{ color: '#374151' }}>
+                    <p className="text-[11px] text-center" style={{ color: 'var(--muted-foreground)' }}>
                       By continuing, you agree to our{' '}
-                      <a href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Terms</a>
+                      <a href="#" style={{ color: 'var(--muted-foreground)', textDecoration: 'underline' }}>Terms</a>
                       {' '}and{' '}
-                      <a href="#" style={{ color: '#4b5563', textDecoration: 'underline' }}>Privacy Policy</a>.
+                      <a href="#" style={{ color: 'var(--muted-foreground)', textDecoration: 'underline' }}>Privacy Policy</a>.
                     </p>
                   </form>
                 </motion.div>
@@ -405,7 +408,7 @@ export default function LoginPage() {
           {['SOC 2 Type II', 'GDPR', 'AES-256'].map(badge => (
             <div key={badge} className="flex items-center gap-1.5">
               <div className="size-1.5 rounded-full" style={{ background: '#22c55e' }} />
-              <span className="text-[11px]" style={{ color: '#374151' }}>{badge}</span>
+              <span className="text-[11px]" style={{ color: 'var(--muted-foreground)' }}>{badge}</span>
             </div>
           ))}
         </div>
@@ -416,7 +419,7 @@ export default function LoginPage() {
             0%   { background-position: -200% 0 }
             100% { background-position: 200% 0  }
           }
-          input::placeholder { color: #374151 }
+          input::placeholder { color: var(--muted-foreground) }
         `}</style>
       </div>
 
@@ -425,7 +428,7 @@ export default function LoginPage() {
       ══════════════════════════════════════════════════════════════════ */}
       <div
         className="hidden lg:flex flex-1 relative flex-col overflow-hidden"
-        style={{ borderLeft: '1px solid rgba(255,255,255,0.04)' }}
+        style={{ borderLeft: '1px solid var(--secondary)' }}
       >
         {/* Star canvas */}
         <canvas
@@ -478,23 +481,23 @@ export default function LoginPage() {
                 animate={{
                   background: i === activeFeature
                     ? 'rgba(99,102,241,0.2)'
-                    : 'rgba(255,255,255,0.03)',
+                    : 'var(--secondary)',
                   borderColor: i === activeFeature
                     ? 'rgba(99,102,241,0.5)'
-                    : 'rgba(255,255,255,0.06)',
+                    : 'var(--border)',
                 }}
                 transition={{ duration: 0.4 }}
                 className="flex items-center gap-2 px-3 py-2 rounded-xl"
-                style={{ border: '1px solid rgba(255,255,255,0.06)' }}
+                style={{ border: '1px solid var(--border)' }}
               >
                 <f.icon
                   className="size-3.5"
-                  style={{ color: i === activeFeature ? '#818cf8' : '#4b5563' }}
+                  style={{ color: i === activeFeature ? '#818cf8' : 'var(--muted-foreground)' }}
                   strokeWidth={2}
                 />
                 <span
                   className="text-[12px] font-medium"
-                  style={{ color: i === activeFeature ? '#c7d2fe' : '#4b5563' }}
+                  style={{ color: i === activeFeature ? '#c7d2fe' : 'var(--muted-foreground)' }}
                 >
                   {f.label}
                 </span>
@@ -527,7 +530,7 @@ export default function LoginPage() {
 
               <h2
                 className="text-[44px] font-bold leading-[1.08] tracking-tight"
-                style={{ color: '#f9fafb' }}
+                style={{ color: 'var(--foreground)' }}
               >
                 Your entire store,<br />
                 <span
@@ -541,7 +544,7 @@ export default function LoginPage() {
                 </span>
               </h2>
 
-              <p className="text-[15px] leading-relaxed max-w-[380px]" style={{ color: '#4b5563' }}>
+              <p className="text-[15px] leading-relaxed max-w-[380px]" style={{ color: 'var(--muted-foreground)' }}>
                 Quadlix uses frontier AI to write your product copy, generate imagery,
                 forecast inventory, and optimize pricing — automatically.
               </p>
@@ -563,17 +566,17 @@ export default function LoginPage() {
                   key={s.lbl}
                   className="rounded-2xl p-4 flex flex-col gap-1"
                   style={{
-                    background: 'rgba(255,255,255,0.03)',
-                    border: '1px solid rgba(255,255,255,0.06)',
+                    background: 'var(--secondary)',
+                    border: '1px solid var(--border)',
                   }}
                 >
                   <span
                     className="text-[26px] font-bold tracking-tight"
-                    style={{ color: '#f9fafb' }}
+                    style={{ color: 'var(--foreground)' }}
                   >
                     {s.val}
                   </span>
-                  <span className="text-[12px]" style={{ color: '#4b5563' }}>{s.lbl}</span>
+                  <span className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>{s.lbl}</span>
                 </div>
               ))}
             </motion.div>
@@ -585,16 +588,16 @@ export default function LoginPage() {
               transition={{ delay: 0.5, duration: 0.5 }}
               className="rounded-2xl overflow-hidden"
               style={{
-                background: 'rgba(255,255,255,0.025)',
-                border: '1px solid rgba(255,255,255,0.06)',
+                background: 'var(--secondary)',
+                border: '1px solid var(--border)',
               }}
             >
               <div
                 className="flex items-center gap-2 px-4 py-3"
-                style={{ borderBottom: '1px solid rgba(255,255,255,0.05)' }}
+                style={{ borderBottom: '1px solid var(--border)' }}
               >
                 <span className="size-1.5 rounded-full bg-green-400 animate-pulse" />
-                <span className="text-[11px] font-semibold tracking-wide" style={{ color: '#6b7280' }}>
+                <span className="text-[11px] font-semibold tracking-wide" style={{ color: 'var(--muted-foreground)' }}>
                   LIVE ACTIVITY
                 </span>
               </div>
@@ -613,14 +616,14 @@ export default function LoginPage() {
                       style={{ background: TICKER_ITEMS[tickerIdx].dot }}
                     />
                     <div className="min-w-0 flex-1">
-                      <p className="text-[13px] font-semibold text-white truncate">
+                      <p className="text-[13px] font-semibold text-foreground truncate">
                         {TICKER_ITEMS[tickerIdx].store}
                       </p>
-                      <p className="text-[12px] truncate" style={{ color: '#4b5563' }}>
+                      <p className="text-[12px] truncate" style={{ color: 'var(--muted-foreground)' }}>
                         {TICKER_ITEMS[tickerIdx].event}
                       </p>
                     </div>
-                    <span className="text-[11px] flex-shrink-0" style={{ color: '#374151' }}>
+                    <span className="text-[11px] flex-shrink-0" style={{ color: 'var(--muted-foreground)' }}>
                       {TICKER_ITEMS[tickerIdx].time}
                     </span>
                   </motion.div>
@@ -636,8 +639,8 @@ export default function LoginPage() {
             transition={{ delay: 0.6, duration: 0.55, ease: [0.22, 1, 0.36, 1] }}
             className="rounded-2xl p-6"
             style={{
-              background: 'rgba(255,255,255,0.025)',
-              border: '1px solid rgba(255,255,255,0.06)',
+              background: 'var(--secondary)',
+              border: '1px solid var(--border)',
             }}
           >
             <div className="flex gap-1 mb-4">
@@ -647,7 +650,7 @@ export default function LoginPage() {
                 </svg>
               ))}
             </div>
-            <p className="text-[15px] leading-relaxed mb-5" style={{ color: '#9ca3af' }}>
+            <p className="text-[15px] leading-relaxed mb-5" style={{ color: 'var(--muted-foreground)' }}>
               "We replaced three SaaS tools with Quadlix. The AI writes better copy than our team,
               our revenue is up 34%, and setup took less than a day."
             </p>
@@ -659,8 +662,8 @@ export default function LoginPage() {
                 style={{ border: '2px solid rgba(99,102,241,0.3)' }}
               />
               <div>
-                <p className="text-[13px] font-semibold text-white">Sarah Jenkins</p>
-                <p className="text-[12px]" style={{ color: '#4b5563' }}>Founder, Minimalist Wear · 3× YoY growth</p>
+                <p className="text-[13px] font-semibold text-foreground">Sarah Jenkins</p>
+                <p className="text-[12px]" style={{ color: 'var(--muted-foreground)' }}>Founder, Minimalist Wear · 3× YoY growth</p>
               </div>
               <div
                 className="ml-auto px-3 py-1.5 rounded-full text-[11px] font-semibold"
@@ -691,8 +694,7 @@ function PremiumField({
     <div className="space-y-1.5">
       <label
         htmlFor={id}
-        className="text-[12px] font-medium tracking-wide block"
-        style={{ color: '#6b7280' }}
+        className="text-[12px] font-medium tracking-wide block text-muted-foreground"
       >
         {label.toUpperCase()}
       </label>
@@ -704,23 +706,7 @@ function PremiumField({
         onChange={e => onChange(e.target.value)}
         disabled={disabled}
         required
-        className="w-full h-12 rounded-xl px-4 text-[14px] outline-none transition-all"
-        style={{
-          background: 'rgba(255,255,255,0.04)',
-          border: '1px solid rgba(255,255,255,0.08)',
-          color: '#f9fafb',
-          caretColor: '#818cf8',
-        }}
-        onFocus={e => {
-          e.target.style.border = '1px solid rgba(99,102,241,0.6)'
-          e.target.style.background = 'rgba(99,102,241,0.05)'
-          e.target.style.boxShadow = '0 0 0 3px rgba(99,102,241,0.1)'
-        }}
-        onBlur={e => {
-          e.target.style.border = '1px solid rgba(255,255,255,0.08)'
-          e.target.style.background = 'rgba(255,255,255,0.04)'
-          e.target.style.boxShadow = 'none'
-        }}
+        className="w-full h-12 rounded-xl px-4 text-[14px] outline-none transition-all bg-secondary/50 border border-border text-foreground focus:border-indigo-500 focus:bg-indigo-500/5 focus:ring-4 focus:ring-indigo-500/10 placeholder:text-muted-foreground/50"
       />
     </div>
   )
@@ -738,20 +724,11 @@ function PremiumButton({
       type="button"
       onClick={onClick}
       whileTap={{ scale: 0.98 }}
-      className="w-full h-12 rounded-xl font-semibold text-[15px] flex items-center justify-center gap-2 transition-all"
-      style={
+      className={`w-full h-12 rounded-xl font-semibold text-[15px] flex items-center justify-center gap-2 transition-all ${
         variant === 'primary'
-          ? {
-            background: 'linear-gradient(135deg, #6366f1 0%, #8b5cf6 100%)',
-            color: '#fff',
-            boxShadow: '0 0 32px rgba(99,102,241,0.4)',
-          }
-          : {
-            background: 'rgba(255,255,255,0.05)',
-            border: '1px solid rgba(255,255,255,0.08)',
-            color: '#9ca3af',
-          }
-      }
+          ? "bg-indigo-600 text-foreground shadow-lg shadow-indigo-500/30 hover:bg-indigo-500"
+          : "bg-secondary border border-border text-muted-foreground hover:bg-secondary/80 hover:text-foreground"
+      }`}
     >
       {children}
     </motion.button>

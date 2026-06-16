@@ -1,10 +1,14 @@
 "use client"
 
 import { useState } from "react"
-import { Upload, ImageIcon, Loader2, CheckCircle2 } from "lucide-react"
+import { Upload, ImageIcon, Loader2, CheckCircle2, Wand2 } from "lucide-react"
 import { createClient } from "@/utils/supabase/client"
 
-export function AIUpload({ onComplete }: { onComplete?: (raw: string, enhanced: string | null) => void }) {
+export function AIUpload({ onComplete, onProcess, isProcessing = false }: { 
+  onComplete?: (raw: string, enhanced: string | null) => void,
+  onProcess?: (url: string) => void,
+  isProcessing?: boolean
+}) {
   const [isUploading, setIsUploading] = useState(false)
   const [rawImageUrl, setRawImageUrl] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
@@ -17,12 +21,11 @@ export function AIUpload({ onComplete }: { onComplete?: (raw: string, enhanced: 
     setError(null)
 
     try {
-      // Direct Frontend to Supabase Upload (Fastest & Best for Vercel)
       const supabase = createClient()
       const fileExt = file.name.split('.').pop()
       const fileName = `product-${Date.now()}.${fileExt}`
 
-      const { data, error: uploadError } = await supabase.storage
+      const { error: uploadError } = await supabase.storage
         .from('product-images')
         .upload(fileName, file, {
           cacheControl: '3600',
@@ -38,14 +41,14 @@ export function AIUpload({ onComplete }: { onComplete?: (raw: string, enhanced: 
       const uploadedUrl = publicUrlData.publicUrl
       setRawImageUrl(uploadedUrl)
 
-      // Pass the URL back to the parent form
       if (onComplete) {
         onComplete(uploadedUrl, null)
       }
 
-    } catch (err: any) {
+    } catch (err) {
       console.error("Upload failed:", err)
-      setError(err.message || "Something went wrong during upload.")
+      const errMsg = err instanceof Error ? err.message : "Something went wrong during upload."
+      setError(errMsg)
     } finally {
       setIsUploading(false)
     }
@@ -55,18 +58,38 @@ export function AIUpload({ onComplete }: { onComplete?: (raw: string, enhanced: 
     <div className="w-full">
       {rawImageUrl && !isUploading ? (
         // ── Success State (Uploaded Image Preview) ──
-        <div className="relative w-full aspect-[4/3] sm:aspect-video rounded-2xl overflow-hidden border border-white/10 bg-[#050508] group">
+        <div className="relative w-full aspect-[4/3] sm:aspect-video rounded-2xl overflow-hidden border border-border bg-card group">
           <img src={rawImageUrl} alt="Product preview" className="object-cover w-full h-full" />
 
-          {/* Overlay to upload a different image */}
-          <label className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center cursor-pointer backdrop-blur-sm">
-            <Upload className="size-8 text-white mb-2" />
-            <span className="text-sm font-bold text-white">Replace Image</span>
-            <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
-          </label>
+          {/* Processing Overlay */}
+          {isProcessing && (
+             <div className="absolute inset-0 bg-indigo-900/40 backdrop-blur-md flex flex-col items-center justify-center z-20">
+                <Loader2 className="size-10 text-white animate-spin mb-4" />
+                <p className="text-white font-black uppercase tracking-widest text-sm animate-pulse text-center px-6">
+                   Neural Engine removing background...
+                </p>
+             </div>
+          )}
 
-          <div className="absolute top-4 right-4 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xl">
-            <CheckCircle2 className="size-3.5" /> Uploaded
+          {/* Actions Overlay */}
+          {!isProcessing && (
+            <div className="absolute inset-0 bg-black/60 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center gap-4 backdrop-blur-sm z-10">
+              <button 
+                onClick={() => onProcess?.(rawImageUrl)}
+                className="px-6 py-2.5 rounded-xl bg-indigo-600 hover:bg-indigo-500 text-white text-sm font-bold flex items-center gap-2 shadow-xl shadow-indigo-500/20 transition-all active:scale-95"
+              >
+                <Wand2 className="size-4" /> Remove Background
+              </button>
+              
+              <label className="flex items-center gap-2 text-white/60 hover:text-white cursor-pointer transition-colors text-xs font-bold uppercase tracking-widest">
+                <Upload className="size-4" /> Replace Image
+                <input type="file" className="hidden" accept="image/*" onChange={handleFileChange} />
+              </label>
+            </div>
+          )}
+
+          <div className="absolute top-4 right-4 bg-emerald-500/20 backdrop-blur-md border border-emerald-500/30 text-emerald-400 px-3 py-1.5 rounded-lg text-xs font-bold flex items-center gap-1.5 shadow-xl z-30">
+            <CheckCircle2 className="size-3.5" /> {isProcessing ? 'Processing' : 'Uploaded'}
           </div>
         </div>
       ) : (

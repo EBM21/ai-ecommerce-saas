@@ -18,6 +18,7 @@ model User {
   updatedAt          DateTime  @updatedAt
 
   stores             Store[]
+  customers          Customer[]
 }
 
 model Store {
@@ -26,9 +27,20 @@ model Store {
   name              String
   subdomain         String    @unique
   customDomain      String?   @unique
+  customDomainStatus DomainStatus @default(INACTIVE)
+  customDomainVerificationType String? // A or CNAME
+  customDomainVerificationValue String?
+  isProvisioned     Boolean   @default(false)
+  domainExpiresAt   DateTime?
+
   themeConfig       Json?
   aiAssistantConfig Json?
   stripeConnectId   String?
+
+  email             String?
+  phone             String?
+  stripePublicKey   String?
+  stripeSecretKey   String?
 
   // 👇 14-Day Free Trial Fields 👇
   plan               String    @default("free_trial")
@@ -44,6 +56,7 @@ model Store {
   products          Product[]
   customers         Customer[]
   orders            Order[]
+  categories        Category[]
 
   @@index([ownerId])
 }
@@ -64,8 +77,41 @@ model Product {
 
   store           Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
   orderItems      OrderItem[]
+  variants        ProductVariant[]
+  categories      Category[]
 
   @@index([storeId])
+}
+
+model Category {
+  id          String    @id @default(uuid())
+  storeId     String
+  name        String
+  slug        String
+  description String?
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  store       Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  products    Product[]
+
+  @@unique([storeId, slug])
+  @@index([storeId])
+}
+
+model ProductVariant {
+  id          String    @id @default(uuid())
+  productId   String
+  name        String    // e.g., "Small / Red"
+  sku         String?
+  price       Decimal?  @db.Decimal(10, 2) // Optional override
+  inventory   Int       @default(0)
+  createdAt   DateTime  @default(now())
+  updatedAt   DateTime  @updatedAt
+
+  product     Product   @relation(fields: [productId], references: [id], onDelete: Cascade)
+
+  @@index([productId])
 }
 
 enum ProductStatus {
@@ -77,6 +123,7 @@ enum ProductStatus {
 model Customer {
   id        String    @id @default(uuid())
   storeId   String
+  userId    String?
   email     String
   name      String?
   phone     String?
@@ -84,10 +131,12 @@ model Customer {
   updatedAt DateTime  @updatedAt
 
   store     Store     @relation(fields: [storeId], references: [id], onDelete: Cascade)
+  user      User?     @relation(fields: [userId], references: [id], onDelete: SetNull)
   orders    Order[]
 
   @@unique([storeId, email])
   @@index([storeId])
+  @@index([userId])
 }
 
 model Order {
@@ -116,10 +165,20 @@ enum OrderStatus {
   CANCELLED
 }
 
+enum DomainStatus {
+  INACTIVE
+  PENDING
+  VERIFIED
+  ACTIVE
+  ERROR
+}
+
 model OrderItem {
   id              String    @id @default(uuid())
   orderId         String
   productId       String
+  variantId       String?
+  variantName     String?
   quantity        Int
   priceAtPurchase Decimal   @db.Decimal(10, 2)
 

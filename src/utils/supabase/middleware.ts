@@ -28,7 +28,7 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll()
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) =>
+          cookiesToSet.forEach(({ name, value }) =>
             request.cookies.set(name, value)
           )
           supabaseResponse = NextResponse.next({ request })
@@ -49,10 +49,7 @@ export async function updateSession(request: NextRequest) {
     pathname === route || pathname.startsWith(route + '/')
   )
 
-  // Check: kya current route public hai?
-  const isPublic = PUBLIC_ROUTES.some(route =>
-    pathname === route || pathname.startsWith(route + '/')
-  )
+
 
   // 1. Logged out user protected route pe gaya → /login
   if (!user && isProtected) {

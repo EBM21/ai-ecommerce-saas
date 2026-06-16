@@ -8,8 +8,6 @@
 
 body {
     font-family: 'Inter', system-ui, sans-serif;
-    background: #040408;
-    color: #ececf1;
     margin: 0;
 }
 
@@ -54,18 +52,25 @@ body {
 }
 
 .nav-link:hover {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: rgba(236, 236, 241, 0.8) !important;
+    background: var(--secondary) !important;
 }
 
 .nav-link.active {
     background: rgba(139, 92, 246, 0.12) !important;
-    color: #ececf1 !important;
 }
 
 .nav-link:hover .nav-tooltip {
     opacity: 1 !important;
     pointer-events: auto !important;
+}
+
+.nav-tooltip {
+    position: absolute; left: calc(100% + 12px);
+    padding: 7px 12px; borderRadius: 8px;
+    font-size: 12.5px; fontWeight: 500;
+    whiteSpace: nowrap; pointerEvents: none;
+    opacity: 0; transition: opacity 0.15s;
+    zIndex: 99;
 }
 
 /* ── Animations ── */

@@ -17,7 +17,7 @@ export default async function ProductsPage() {
   })
 
   if (!store) {
-    return <div className="p-8 text-white">Please create a store first.</div>
+    return <div className="p-8 text-foreground">Please create a store first.</div>
   }
 
   // 2. Database se products fetch karein
@@ -40,5 +40,5 @@ export default async function ProductsPage() {
   }))
 
   // 4. Client component ko data pass karein
-  return <ProductsClient products={formattedProducts} />
+  return <ProductsClient products={formattedProducts} domain={store.customDomain || store.subdomain} />
 }

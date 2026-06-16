@@ -1,10 +1,16 @@
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
-import { ShoppingBag } from 'lucide-react'
+import { CartProvider } from '@/lib/cart-context'
+import { CartDrawer } from '@/components/cart-drawer'
+import { StoreHeader } from '@/components/store-header'
+import { createClient } from '@/utils/supabase/server'
+import { AIChatbot } from '@/components/ai-chatbot'
+import { ThemeConfig } from '@/types/theme-types'
+import { NovaHeader, MinimalHeader, EnigmaHeader } from '@/components/store-layouts'
 import Link from 'next/link'
+import { headers } from 'next/headers'
 
-// Layout simply reads themeConfig for navbar — the homepage page.tsx renders everything else.
-// Nav links with correct hrefs are now fully controlled from the customizer.
+export const dynamic = 'force-dynamic'
 
 export default async function StoreLayout({
     children,
@@ -21,6 +27,14 @@ export default async function StoreLayout({
 
     if (!store) notFound()
 
+    // ── Calculate Base URL for Links ──
+    const headerList = await headers()
+    const host = headerList.get("host") || ""
+    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
+    const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
+    const isPathBased = host === baseDomain || host === `app.${baseDomain}`
+    const baseUrl = isPathBased ? `/${domain}` : ""
+
     // Parse themeConfig
     let theme: any = null
     if (store.themeConfig) {
@@ -33,15 +47,109 @@ export default async function StoreLayout({
         }
     }
 
-    // NOTE: Header is now rendered inside storefront-page.tsx (homepage) to get full
-    // control from themeConfig (sticky, showCart, logoUrl, primaryColor, etc).
-    // This layout just provides the html shell.
-    // If you have inner pages (product, collection) that also need the navbar,
-    // you can render it here the same way as the homepage does.
+    const supabase = await createClient()
+    const { data: { user } } = await supabase.auth.getUser()
+
+    const { layoutId, blocks } = theme || {}
+    const isBuilder = blocks && blocks.length > 0
 
     return (
-        <>
-            {children}
-        </>
+        <CartProvider domain={domain}>
+            <div 
+                className="min-h-screen flex flex-col"
+                style={{
+                    backgroundColor: theme?.styles?.bgColor || '#ffffff',
+                    color: theme?.styles?.textColor || '#000000',
+                    // @ts-ignore
+                    '--background': theme?.styles?.bgColor || '#ffffff',
+                    '--foreground': theme?.styles?.textColor || '#000000',
+                    '--card': theme?.styles?.cardBg || 'rgba(255,255,255,0.03)',
+                    '--border': theme?.styles?.borderColor || 'rgba(255,255,255,0.08)',
+                    '--primary': theme?.branding?.primaryColor || '#6366f1',
+                }}
+            >
+                {/* ── HEADER ── */}
+                {isBuilder && blocks.some((b: any) => b.type.startsWith('header-')) ? null : (
+                    <StoreHeader theme={theme} user={user} domain={domain} baseUrl={baseUrl} />
+                )}
+                
+                <main className="flex-1 flex flex-col">
+                    {children}
+                </main>
+
+                {/* ── FOOTER ── */}
+                {isBuilder && blocks.some((b: any) => b.type.startsWith('footer-')) ? null : (
+                    <StoreFooter theme={theme} domain={domain} baseUrl={baseUrl} />
+                )}
+            </div>
+
+            <CartDrawer domain={domain} theme={theme} baseUrl={baseUrl} />
+            {theme?.aiAssistant?.show && (
+                <AIChatbot storeId={store.id} domain={domain} config={theme.aiAssistant} />
+            )}
+        </CartProvider>
+    )
+}
+
+function StoreFooter({ theme, domain, baseUrl = "" }: { theme: ThemeConfig, domain: string, baseUrl?: string }) {
+    const { footer, styles, layoutId } = theme
+    
+    // Minimal Footer
+    if (layoutId === 'minimal') {
+        return (
+            <footer className="py-24 bg-gray-50 border-t border-gray-100">
+                <div className="max-w-7xl mx-auto px-10 flex flex-col items-center gap-12">
+                    <span className="text-2xl font-light tracking-[0.4em] uppercase">{theme.branding.storeName}</span>
+                    <div className="flex gap-12">
+                        {footer.links.map((l, i) => (
+                            <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 no-underline hover:text-black">
+                                {l.label}
+                            </Link>
+                        ))}
+                    </div>
+                    <p className="text-[10px] font-bold text-gray-300 uppercase tracking-widest">{footer.text}</p>
+                </div>
+            </footer>
+        )
+    }
+
+    // Enigma Footer
+    if (layoutId === 'enigma') {
+        return (
+            <footer className="py-32 bg-black border-t border-white/5 text-white">
+                <div className="max-w-7xl mx-auto px-10 flex flex-col md:flex-row justify-between items-end gap-12">
+                    <div>
+                        <h2 className="text-6xl font-black italic uppercase tracking-tighter mb-8">{theme.branding.storeName}<span className="text-red-600">.</span></h2>
+                        <p className="text-white/30 text-sm font-bold uppercase tracking-widest max-w-xs leading-relaxed">{footer.text}</p>
+                    </div>
+                    <div className="flex flex-col items-end gap-4">
+                        {footer.links.map((l, i) => (
+                            <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-xl font-black italic uppercase tracking-tighter text-white/20 hover:text-white no-underline transition-colors">
+                                {l.label}
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            </footer>
+        )
+    }
+
+    // Default Nova Footer
+    return (
+        <footer className="py-16 border-t" style={{ borderColor: styles.borderColor, background: footer.bgColor || styles.bgColor }}>
+            <div className="max-w-7xl mx-auto px-6 flex flex-col md:flex-row justify-between items-center gap-8">
+                <div className="flex flex-col items-center md:items-start gap-2">
+                    <span className="font-black text-xl tracking-tighter uppercase italic">{theme.branding.storeName}</span>
+                    <p className="text-xs opacity-40 font-bold uppercase tracking-widest">{footer.text}</p>
+                </div>
+                <div className="flex gap-8">
+                    {footer.links.map((l, i) => (
+                        <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 no-underline transition-all" style={{ color: styles.textColor }}>
+                            {l.label}
+                        </Link>
+                    ))}
+                </div>
+            </div>
+        </footer>
     )
 }

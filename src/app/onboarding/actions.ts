@@ -4,20 +4,38 @@ import { revalidatePath } from 'next/cache'
 import { redirect } from 'next/navigation'
 import { createClient } from '@/utils/supabase/server'
 import prisma from '@/lib/prisma'
+import { z } from 'zod'
+import { Prisma } from '@prisma/client'
+
+const createStoreSchema = z.object({
+  name: z.string().min(1, 'Store name is required').max(100, 'Store name must be 100 characters or less'),
+  subdomain: z.string()
+    .min(1, 'Subdomain is required')
+    .max(50, 'Subdomain must be 50 characters or less')
+    .transform(val => val.toLowerCase())
+    .refine((val) => /^[a-z0-9-]+$/.test(val), 'Subdomain can only contain lowercase letters, numbers, and hyphens')
+    .refine((val) => !['app', 'admin', 'www', 'api', 'dashboard', 'main'].includes(val), {
+      message: 'This subdomain is reserved',
+    }),
+  themeConfig: z.unknown().optional(),
+})
 
 export async function createStore(data: {
   name: string
   subdomain: string
-  themeConfig?: any
+  themeConfig?: unknown
 }) {
   const supabase = await createClient()
   const { data: { user } } = await supabase.auth.getUser()
 
   if (!user) redirect('/login')
 
-  const { name, subdomain, themeConfig } = data
+  const validated = createStoreSchema.safeParse(data)
+  if (!validated.success) {
+    throw new Error(validated.error.issues.map(issue => issue.message).join(', '))
+  }
 
-  if (!name || !subdomain) throw new Error('Name and subdomain are required')
+  const { name, subdomain, themeConfig } = validated.data
 
   // Ensure user row exists
   await prisma.user.upsert({
@@ -31,12 +49,20 @@ export async function createStore(data: {
   trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
   // Create store
-try {
+  try {
     await prisma.store.create({
-      data: { ownerId: user.id, name, subdomain, themeConfig, trialEndsAt } as any,
+      data: {
+        ownerId: user.id,
+        name,
+        subdomain,
+        themeConfig: themeConfig as Prisma.InputJsonValue,
+        trialEndsAt
+      },
     })
-  } catch (e: any) {
-    if (e.code === 'P2002') throw new Error('This URL is already taken. Please choose another.')
+  } catch (e) {
+    if (e && typeof e === 'object' && 'code' in e && e.code === 'P2002') {
+      throw new Error('This URL is already taken. Please choose another.')
+    }
     throw new Error('Failed to create store. Please try again.')
   }
 
@@ -49,9 +75,9 @@ export async function getStoreTrialStatus() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) return null
 
-const store = await prisma.store.findFirst({
+  const store = await prisma.store.findFirst({
     where: { ownerId: user.id },
-    select: { trialEndsAt: true, subscriptionActive: true } as any
+    select: { trialEndsAt: true, subscriptionActive: true }
   })
   
   return store
