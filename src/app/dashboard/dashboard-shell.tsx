@@ -460,25 +460,26 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           onClick={() => setSearchOpen(true)}
           className="flex-1 max-w-[320px] h-9 bg-secondary/50 border border-border rounded-xl px-3 flex items-center gap-2.5 hover:bg-secondary hover:border-border/80 transition-all group"
         >
-          <Search className="size-3.5 text-muted-foreground/40 group-hover:text-muted-foreground/60" />
-          <span className="text-[13px] text-muted-foreground/40 flex-1 text-left">Search everything...</span>
-          <div className="flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background border border-border shadow-sm">
+          <Search className="size-3.5 text-muted-foreground/40 group-hover:text-muted-foreground/60 shrink-0" />
+          <span className="text-[13px] text-muted-foreground/40 flex-1 text-left truncate hidden sm:block">Search everything...</span>
+          <span className="text-[13px] text-muted-foreground/40 flex-1 text-left truncate sm:hidden">Search...</span>
+          <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background border border-border shadow-sm shrink-0">
             <Command className="size-2.5 text-muted-foreground/50" />
             <span className="text-[9px] text-muted-foreground/50 font-bold font-mono">K</span>
           </div>
         </button>
 
-        <div className="ml-auto flex items-center gap-4">
+        <div className="ml-auto flex items-center gap-2 md:gap-4">
           <div className="hidden sm:block px-3 py-1.5 rounded-lg bg-secondary/50 border border-border font-mono text-[12px] text-muted-foreground/60">
             {time}
           </div>
 
           <Link
             href="/dashboard/ai-studio"
-            className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/15 transition-all text-indigo-600 dark:text-indigo-400 no-underline"
+            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/15 transition-all text-indigo-600 dark:text-indigo-400 no-underline shrink-0"
           >
             <Zap className="size-3.5 fill-current" />
-            <span className="text-[12px] font-bold tracking-tight">AI Studio</span>
+            <span className="hidden sm:inline text-[12px] font-bold tracking-tight">AI Studio</span>
           </Link>
 
           <button 

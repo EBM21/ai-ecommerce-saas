@@ -25,6 +25,7 @@ import {
     verticalListSortingStrategy,
     useSortable
 } from '@dnd-kit/sortable'
+import { ThemeToggle } from "@/components/theme-toggle"
 import { CSS } from '@dnd-kit/utilities'
 import { motion, AnimatePresence } from 'framer-motion'
 import {
@@ -1690,6 +1691,10 @@ export default function VisualBuilder({
                                 <Settings2 className="size-3.5" />
                             </button>
                         )}
+
+                        <div className="hidden sm:block">
+                            <ThemeToggle />
+                        </div>
 
                         <button onClick={() => setIsPreview(!isPreview)}
                             className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 ${

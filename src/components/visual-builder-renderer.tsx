@@ -7,7 +7,7 @@ import Link from 'next/link'
 import { 
     ArrowRight, Star, ShoppingBag, CheckCircle2, 
     Shield, Zap, Globe, MessageSquare, GripVertical, 
-    Trash2, Settings2, Plus, Move 
+    Trash2, Settings2, Plus, Move, Menu 
 } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
@@ -498,11 +498,12 @@ function InnerRenderer({ type, props: p, products, baseUrl, theme }: any) {
                     <div className="max-w-7xl mx-auto px-6 h-16 flex items-center justify-between">
                         <div className="flex items-center gap-3">
                             <div className="size-7 rounded-lg bg-primary flex items-center justify-center text-white font-black text-sm">{theme.branding.storeName[0]}</div>
-                            <span className="font-bold text-sm">{theme.branding.storeName}</span>
+                            <span className="font-bold text-sm truncate max-w-[150px]">{theme.branding.storeName}</span>
                         </div>
-                        <nav className="flex gap-6">
+                        <nav className="hidden md:flex gap-6">
                             {p.links?.map((l: any, i: number) => <Link key={i} href={`${baseUrl}${l.href}`} className="text-xs font-bold opacity-60 hover:opacity-100 no-underline transition-opacity">{l.label}</Link>)}
                         </nav>
+                        <button className="md:hidden p-2 opacity-60"><Menu className="size-5" /></button>
                     </div>
                 </div>
             )
@@ -510,11 +511,12 @@ function InnerRenderer({ type, props: p, products, baseUrl, theme }: any) {
         case 'header-minimal':
             return (
                 <div className="w-full border-b border-border bg-background">
-                    <div className="max-w-7xl mx-auto px-10 h-20 flex items-center justify-between">
-                        <span className="text-xl font-light tracking-[0.3em] uppercase">{theme.branding.storeName}</span>
-                        <nav className="flex gap-10">
+                    <div className="max-w-7xl mx-auto px-6 md:px-10 h-16 md:h-20 flex items-center justify-between">
+                        <span className="text-lg md:text-xl font-light tracking-[0.2em] md:tracking-[0.3em] uppercase truncate max-w-[200px]">{theme.branding.storeName}</span>
+                        <nav className="hidden md:flex gap-10">
                             {p.links?.map((l: any, i: number) => <Link key={i} href={`${baseUrl}${l.href}`} className="text-[10px] font-bold uppercase tracking-widest no-underline opacity-60 hover:opacity-100 transition-opacity">{l.label}</Link>)}
                         </nav>
+                        <button className="md:hidden p-2 opacity-60"><Menu className="size-5" /></button>
                     </div>
                 </div>
             )

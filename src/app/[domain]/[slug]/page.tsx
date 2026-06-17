@@ -109,7 +109,7 @@ export default async function DynamicStorePage({
     // ── CHECK FOR BUILDER PAGE BLOCKS (highest priority) ──
     // If this slug has builder blocks saved via the visual builder, render them
     const slugBlocks = pageBlocks?.[slug]
-    if (slugBlocks && slugBlocks.length > 0) {
+    if (slugBlocks !== undefined) {
         // Dynamic Global Header/Footer Injection
         const allBlocks = [...(blocks || []), ...Object.values(pageBlocks || {}).flat()]
         const globalHeader = allBlocks.find((b: any) => b.type?.startsWith('header-'))
@@ -124,13 +124,15 @@ export default async function DynamicStorePage({
         }
 
         return (
-            <VisualBuilderRenderer
-                theme={theme}
-                blocks={finalBlocks}
-                products={products}
-                domain={domain}
-                baseUrl={baseUrl}
-            />
+            <div className="flex flex-col min-h-screen">
+                <VisualBuilderRenderer
+                    theme={theme}
+                    blocks={finalBlocks}
+                    products={products}
+                    domain={domain}
+                    baseUrl={baseUrl}
+                />
+            </div>
         )
     }
 
