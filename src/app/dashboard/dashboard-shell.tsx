@@ -435,7 +435,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       </aside>
 
       {/* ── TOPBAR ── */}
-      <header
+      {isCustomizer ? null : (
+        <header
         className="fixed top-0 right-0 z-40 h-[60px] bg-background/90 backdrop-blur-xl border-b border-border flex items-center px-4 md:px-6 gap-3 md:gap-4 transition-all duration-300"
         style={{ left: isMobile ? 0 : sideW }}
       >
@@ -491,6 +492,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           <ThemeToggle />
         </div>
       </header>
+      )}
 
       {/* ── MAIN CONTENT ── */}
       <main

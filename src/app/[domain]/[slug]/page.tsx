@@ -95,16 +95,38 @@ export default async function DynamicStorePage({
     }
 
     const { styles, layoutId, customPages, mode, blocks, pageBlocks } = theme
-    const products = store.products || []
+    const rawProducts = store.products || []
+
+    // ── SERIALIZE PRODUCTS FOR CLIENT COMPONENTS ──
+    const products = rawProducts.map(p => ({
+        ...p,
+        price: Number(p.price),
+        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+    }))
 
     // ── CHECK FOR BUILDER PAGE BLOCKS (highest priority) ──
     // If this slug has builder blocks saved via the visual builder, render them
     const slugBlocks = pageBlocks?.[slug]
     if (slugBlocks && slugBlocks.length > 0) {
+        // Dynamic Global Header/Footer Injection
+        const allBlocks = [...(blocks || []), ...Object.values(pageBlocks || {}).flat()]
+        const globalHeader = allBlocks.find((b: any) => b.type?.startsWith('header-'))
+        const globalFooter = allBlocks.find((b: any) => b.type?.startsWith('footer-'))
+        
+        let finalBlocks = [...slugBlocks]
+        if (globalHeader && !finalBlocks.some(b => b.type.startsWith('header-'))) {
+            finalBlocks.unshift(globalHeader)
+        }
+        if (globalFooter && !finalBlocks.some(b => b.type.startsWith('footer-'))) {
+            finalBlocks.push(globalFooter)
+        }
+
         return (
             <VisualBuilderRenderer
                 theme={theme}
-                blocks={slugBlocks}
+                blocks={finalBlocks}
                 products={products}
                 domain={domain}
                 baseUrl={baseUrl}

@@ -142,7 +142,17 @@ export default async function StorefrontHomepage({
 
     if (!store) notFound()
 
-    const products = store.products
+    const rawProducts = store.products || []
+
+    // ── SERIALIZE PRODUCTS FOR CLIENT COMPONENTS ──
+    const products = rawProducts.map(p => ({
+        ...p,
+        price: Number(p.price),
+        compareAtPrice: p.compareAtPrice ? Number(p.compareAtPrice) : null,
+        createdAt: p.createdAt.toISOString(),
+        updatedAt: p.updatedAt.toISOString(),
+    }))
+
     const baseUrl = await getBaseUrl(domain)
     
     // Parse & merge config

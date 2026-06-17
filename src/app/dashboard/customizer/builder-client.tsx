@@ -1184,13 +1184,13 @@ function GlobalSettingsPanel({ config, onUpdate }: { config: ThemeConfig; onUpda
 // PAGES PANEL
 // ─────────────────────────────────────────────────────────────────────────────
 function PagesPanel({
-    config, storeId, currentPage, onPageChange, onPagesChange
+    config, storeId, currentPage, onPageChange, onConfigUpdate
 }: {
     config: ThemeConfig
     storeId: string
     currentPage: string
     onPageChange: (slug: string) => void
-    onPagesChange: (customPages: ThemeConfig['customPages']) => void
+    onConfigUpdate: (newConfig: ThemeConfig) => void
 }) {
     const [newPageTitle, setNewPageTitle] = useState('')
     const [newPageSlug, setNewPageSlug] = useState('')
@@ -1206,7 +1206,15 @@ function PagesPanel({
         const res = await createCustomPage(storeId, newPageSlug, newPageTitle)
         if (res.success) {
             toast.success(`Page "${newPageTitle}" created!`)
-            onPagesChange([...(config.customPages || []), { slug: newPageSlug, title: newPageTitle, content: '' }])
+            onConfigUpdate({
+                ...config,
+                customPages: [...(config.customPages || []), { slug: newPageSlug, title: newPageTitle, content: '' }],
+                pageBlocks: { ...(config.pageBlocks || {}), [newPageSlug]: [] },
+                navigation: {
+                    ...config.navigation,
+                    links: [...(config.navigation?.links || []), { label: newPageTitle, href: `/${newPageSlug}` }]
+                }
+            })
             onPageChange(newPageSlug)
             setNewPageTitle('')
             setNewPageSlug('')
@@ -1222,7 +1230,17 @@ function PagesPanel({
         const res = await deleteCustomPage(storeId, slug)
         if (res.success) {
             toast.success('Page deleted')
-            onPagesChange((config.customPages || []).filter(p => p.slug !== slug))
+            const newPageBlocks = { ...(config.pageBlocks || {}) }
+            delete newPageBlocks[slug]
+            onConfigUpdate({
+                ...config,
+                customPages: (config.customPages || []).filter(p => p.slug !== slug),
+                pageBlocks: newPageBlocks,
+                navigation: {
+                    ...config.navigation,
+                    links: (config.navigation?.links || []).filter(l => l.href !== `/${slug}`)
+                }
+            })
             if (currentPage === slug) onPageChange('home')
         } else {
             toast.error(res.error || 'Failed to delete page')
@@ -1294,7 +1312,7 @@ function PagesPanel({
                             <button
                                 onClick={e => { e.stopPropagation(); handleDelete(page.slug) }}
                                 disabled={deletingSlug === page.slug}
-                                className="size-5 flex items-center justify-center text-rose-400 opacity-0 group-hover:opacity-100 hover:text-rose-500 transition-all shrink-0 disabled:opacity-50"
+                                className="size-5 flex items-center justify-center text-rose-400 opacity-100 hover:text-rose-500 transition-all shrink-0 disabled:opacity-50"
                             >
                                 {deletingSlug === page.slug ? <RefreshCw className="size-3 animate-spin" /> : <Trash2 className="size-3" />}
                             </button>
@@ -1348,10 +1366,22 @@ export default function VisualBuilder({
 
     // Get blocks for current page
     const getCurrentBlocks = useCallback((): BuilderBlock[] => {
-        if (currentPage === 'home') {
-            return config.pageBlocks?.home ?? config.blocks ?? []
-        }
-        return config.pageBlocks?.[currentPage] ?? []
+        const homeBlocks = config.pageBlocks?.home ?? config.blocks ?? []
+        if (currentPage === 'home') return homeBlocks
+
+        const localBlocks = config.pageBlocks?.[currentPage] ?? []
+        
+        // Dynamic global header/footer
+        const globalHeader = homeBlocks.find(b => b.type.startsWith('header-'))
+        const globalFooter = homeBlocks.find(b => b.type.startsWith('footer-'))
+        const hasHeader = localBlocks.some(b => b.type.startsWith('header-'))
+        const hasFooter = localBlocks.some(b => b.type.startsWith('footer-'))
+
+        let finalBlocks = [...localBlocks]
+        if (globalHeader && !hasHeader) finalBlocks.unshift(globalHeader)
+        if (globalFooter && !hasFooter) finalBlocks.push(globalFooter)
+
+        return finalBlocks
     }, [config, currentPage])
 
     // Set blocks for current page
@@ -1425,19 +1455,66 @@ export default function VisualBuilder({
     }, [setCurrentBlocks])
 
     const updateBlockProp = useCallback((id: string, key: string, value: any) => {
-        setCurrentBlocks(prev => prev.map(b => b.id === id ? { ...b, props: { ...b.props, [key]: value } } : b))
-    }, [setCurrentBlocks])
+        setConfig(prev => {
+            const next = { ...prev, pageBlocks: { ...prev.pageBlocks } }
+            // Sync across all pages if it's a header or footer (global)
+            let isGlobal = false
+            for (const page in next.pageBlocks) {
+                if (next.pageBlocks[page]?.find(b => b.id === id && (b.type.startsWith('header-') || b.type.startsWith('footer-')))) {
+                    isGlobal = true; break
+                }
+            }
+            if (isGlobal) {
+                for (const page in next.pageBlocks) {
+                    next.pageBlocks[page] = next.pageBlocks[page]?.map(b => b.id === id ? { ...b, props: { ...b.props, [key]: value } } : b)
+                }
+                return next
+            }
+            // Otherwise, just update current page
+            next.pageBlocks[currentPage] = (next.pageBlocks[currentPage] ?? []).map(b => b.id === id ? { ...b, props: { ...b.props, [key]: value } } : b)
+            return next
+        })
+    }, [currentPage])
 
     const updateBlockStyle = useCallback((id: string, key: string, value: string) => {
-        setCurrentBlocks(prev => prev.map(b => b.id === id ? { ...b, styles: { ...(b.styles || {}), [key]: value } } : b))
-    }, [setCurrentBlocks])
+        setConfig(prev => {
+            const next = { ...prev, pageBlocks: { ...prev.pageBlocks } }
+            let isGlobal = false
+            for (const page in next.pageBlocks) {
+                if (next.pageBlocks[page]?.find(b => b.id === id && (b.type.startsWith('header-') || b.type.startsWith('footer-')))) {
+                    isGlobal = true; break
+                }
+            }
+            if (isGlobal) {
+                for (const page in next.pageBlocks) {
+                    next.pageBlocks[page] = next.pageBlocks[page]?.map(b => b.id === id ? { ...b, styles: { ...(b.styles || {}), [key]: value } } : b)
+                }
+                return next
+            }
+            next.pageBlocks[currentPage] = (next.pageBlocks[currentPage] ?? []).map(b => b.id === id ? { ...b, styles: { ...(b.styles || {}), [key]: value } } : b)
+            return next
+        })
+    }, [currentPage])
 
     const updateBlockAnim = useCallback((id: string, key: string, value: any) => {
-        setCurrentBlocks(prev => prev.map(b => b.id === id ? {
-            ...b,
-            animation: { ...(b.animation || { entrance: 'none', hover: 'none' }), [key]: value }
-        } : b))
-    }, [setCurrentBlocks])
+        setConfig(prev => {
+            const next = { ...prev, pageBlocks: { ...prev.pageBlocks } }
+            let isGlobal = false
+            for (const page in next.pageBlocks) {
+                if (next.pageBlocks[page]?.find(b => b.id === id && (b.type.startsWith('header-') || b.type.startsWith('footer-')))) {
+                    isGlobal = true; break
+                }
+            }
+            if (isGlobal) {
+                for (const page in next.pageBlocks) {
+                    next.pageBlocks[page] = next.pageBlocks[page]?.map(b => b.id === id ? { ...b, animation: { ...(b.animation || { entrance: 'none', hover: 'none' }), [key]: value } } : b)
+                }
+                return next
+            }
+            next.pageBlocks[currentPage] = (next.pageBlocks[currentPage] ?? []).map(b => b.id === id ? { ...b, animation: { ...(b.animation || { entrance: 'none', hover: 'none' }), [key]: value } } : b)
+            return next
+        })
+    }, [currentPage])
 
     // DnD handlers
     const handleDragStart = (event: DragStartEvent) => {
@@ -1713,7 +1790,7 @@ export default function VisualBuilder({
                                                     storeId={storeId}
                                                     currentPage={currentPage}
                                                     onPageChange={(slug) => { setCurrentPage(slug); setActiveBlockId(null) }}
-                                                    onPagesChange={pages => setConfig(prev => ({ ...prev, customPages: pages }))}
+                                                    onConfigUpdate={setConfig}
                                                 />
                                             </motion.div>
                                         )}
