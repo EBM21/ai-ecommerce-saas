@@ -77,7 +77,7 @@ export async function getStoreTrialStatus() {
 
   const store = await prisma.store.findFirst({
     where: { ownerId: user.id },
-    select: { trialEndsAt: true, subscriptionActive: true }
+    select: { trialEndsAt: true, subscriptionActive: true, subdomain: true }
   })
   
   return store

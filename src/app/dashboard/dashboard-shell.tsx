@@ -8,6 +8,7 @@ import { getStoreTrialStatus } from "../onboarding/actions"
 import "./dashboard.css"
 import { ThemeToggle } from "@/components/theme-toggle"
 import { toast } from "sonner"
+import { getStoreUrl } from "@/lib/utils"
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
@@ -67,6 +68,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   const [timeLeft, setTimeLeft] = useState<{days: number, hours: number} | null>(null)
   const [isExpired, setIsExpired] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(true)
+  const [storeDomain, setStoreDomain] = useState<string>("")
 
   const pathname = usePathname()
   const router = useRouter()
@@ -78,21 +80,24 @@ export default function DashboardShell({ children }: { children: React.ReactNode
   // ── Fetch Trial Status (Days & Hours Logic) ──
   useEffect(() => {
     getStoreTrialStatus().then((store: any) => {
-      if (store && store.trialEndsAt) {
-        setIsSubscribed(store.subscriptionActive)
-        
-        const end = new Date(store.trialEndsAt).getTime()
-        const now = new Date().getTime()
-        const diff = end - now
+      if (store) {
+        if (store.subdomain) setStoreDomain(store.subdomain)
+        if (store.trialEndsAt) {
+          setIsSubscribed(store.subscriptionActive)
+          
+          const end = new Date(store.trialEndsAt).getTime()
+          const now = new Date().getTime()
+          const diff = end - now
 
-        if (diff <= 0 && !store.subscriptionActive) {
-          setIsExpired(true)
-          setTimeLeft({ days: 0, hours: 0 })
-        } else {
-          // Din aur Ghante calculate kiye
-          const d = Math.floor(diff / (1000 * 60 * 60 * 24))
-          const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
-          setTimeLeft({ days: Math.max(0, d), hours: Math.max(0, h) })
+          if (diff <= 0 && !store.subscriptionActive) {
+            setIsExpired(true)
+            setTimeLeft({ days: 0, hours: 0 })
+          } else {
+            // Din aur Ghante calculate kiye
+            const d = Math.floor(diff / (1000 * 60 * 60 * 24))
+            const h = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60))
+            setTimeLeft({ days: Math.max(0, d), hours: Math.max(0, h) })
+          }
         }
       }
     })
@@ -266,9 +271,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
               {group.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + "/")
+                const isStoreLink = href === "/store"
+                const targetHref = isStoreLink && storeDomain ? getStoreUrl(storeDomain) : href
+
+                const LinkComponent = isStoreLink ? 'a' : Link
+
                 return (
-                  <Link
-                    key={href} href={href} prefetch={true}
+                  <LinkComponent
+                    key={href} href={targetHref} {...(!isStoreLink ? { prefetch: true } : { target: "_blank", rel: "noopener noreferrer" })}
                     onClick={() => isMobile && setMobileOpen(false)}
                     className={`nav-link ${active ? "active" : ""}`}
                     style={{
