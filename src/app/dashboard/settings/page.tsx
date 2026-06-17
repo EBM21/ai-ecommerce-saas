@@ -15,6 +15,7 @@ import {
     provisionFreeDomain, verifyDomainDNS, removeCustomDomain 
 } from "./domain-actions"
 import { toast } from "sonner"
+import { getStoreUrl } from "@/lib/utils"
 
 // ── SUSPENSE WRAPPER ──
 export default function SettingsPage() {
@@ -229,7 +230,7 @@ function SettingsContent() {
                                             <div className="size-10 rounded-xl bg-indigo-500/10 flex items-center justify-center text-indigo-500"><Globe className="size-5" /></div>
                                             <div><p className="text-sm font-bold">{formData.domain.subdomain}.quadlix.com</p><p className="text-[10px] text-muted-foreground uppercase font-bold">Standard Subdomain</p></div>
                                         </div>
-                                        <a href={`https://${formData.domain.subdomain}.quadlix.com`} target="_blank" className="p-2 hover:bg-secondary rounded-lg transition-colors"><ExternalLink className="size-4 opacity-40" /></a>
+                                        <a href={getStoreUrl(formData.domain.subdomain)} target="_blank" rel="noopener noreferrer" className="p-2 hover:bg-secondary rounded-lg transition-colors"><ExternalLink className="size-4 opacity-40" /></a>
                                     </div>
                                 </div>
 

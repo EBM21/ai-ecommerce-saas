@@ -46,6 +46,7 @@ import { ThemeConfig, BuilderBlock, AnimationType, HoverEffect, NavLink } from '
 import { VisualBuilderRenderer } from '@/components/visual-builder-renderer'
 import { toast } from 'sonner'
 import { updateThemeConfig, createCustomPage, deleteCustomPage } from './action'
+import { getStoreUrl } from '@/lib/utils'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // BLOCK LIBRARY — Organized by category
@@ -1645,7 +1646,7 @@ export default function VisualBuilder({
 
                         {storeDomain && (
                             <a
-                                href={`/${storeDomain}${currentPage !== 'home' ? `/${currentPage}` : ''}`}
+                                href={getStoreUrl(storeDomain, currentPage !== 'home' ? `/${currentPage}` : '')}
                                 target="_blank"
                                 className="hidden lg:flex items-center gap-1 text-[10px] font-bold text-muted-foreground hover:text-primary transition-colors shrink-0"
                             >

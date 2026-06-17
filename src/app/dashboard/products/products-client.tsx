@@ -12,6 +12,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Input } from "@/components/ui/input"
 import Link from "next/link"
+import { getStoreUrl } from "@/lib/utils"
 
 type Product = {
     id: string
@@ -251,11 +252,11 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                                                     </TableCell>
                                                     <TableCell className="px-8 py-4 text-right">
                                                         <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
-                                                            <Link href={`/${domain}/product/${product.id}`} target="_blank">
+                                                            <a href={getStoreUrl(domain, `/product/${product.id}`)} target="_blank" rel="noopener noreferrer">
                                                                 <button className="p-2 rounded-lg bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all">
                                                                     <Eye className="size-4" />
                                                                 </button>
-                                                            </Link>
+                                                            </a>
                                                             <Link href={`/dashboard/products/${product.id}/edit`}>
                                                                 <button className="p-2 rounded-lg bg-indigo-500/10 hover:bg-indigo-500/20 text-indigo-400/70 hover:text-indigo-400 transition-all border border-transparent hover:border-indigo-500/30">
                                                                     <Pencil className="size-4" />
