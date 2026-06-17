@@ -12,7 +12,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, Zap, Command, X, Palette,
-  User, CreditCard, HelpCircle, ChevronUp, AlertCircle
+  User, CreditCard, HelpCircle, ChevronUp, AlertCircle, Menu
 } from "lucide-react"
 
 type NavItem = {
@@ -55,11 +55,13 @@ const NAV_GROUPS: NavGroup[] = [
 
 export default function DashboardShell({ children }: { children: React.ReactNode }) {
   const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpen, setMobileOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal, setSearchVal] = useState("")
   const [userMenu, setUserMenu] = useState(false)
   const [time, setTime] = useState("")
+  const [isMobile, setIsMobile] = useState(false)
   
   // Trial States Updated (Days + Hours)
   const [timeLeft, setTimeLeft] = useState<{days: number, hours: number} | null>(null)
@@ -94,6 +96,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         }
       }
     })
+  }, [])
+
+  // Detect mobile
+  useEffect(() => {
+    const check = () => setIsMobile(window.innerWidth < 768)
+    check()
+    window.addEventListener('resize', check)
+    return () => window.removeEventListener('resize', check)
   }, [])
 
   // Clock
@@ -137,7 +147,8 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     .find(i => pathname === i.href || pathname.startsWith(i.href + "/"))
     ?.label ?? "Dashboard"
 
-  const sideW = collapsed ? 64 : 240
+  const sideW = isMobile ? 0 : (collapsed ? 64 : 240)
+  const mobileSideW = 260 // mobile drawer width
   const isBillingPage = pathname === "/dashboard/settings"
   const showBanner = timeLeft !== null && (timeLeft.days > 0 || timeLeft.hours > 0) && !isSubscribed
 
@@ -194,14 +205,23 @@ export default function DashboardShell({ children }: { children: React.ReactNode
         </div>
       )}
 
+      {/* ── MOBILE BACKDROP ── */}
+      {mobileOpen && isMobile && (
+        <div
+          className="fixed inset-0 z-40 bg-black/50 backdrop-blur-sm"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
       {/* ── SIDEBAR ── */}
       <aside style={{
         position: "fixed", top: 0, left: 0, bottom: 0,
-        width: sideW,
+        width: isMobile ? mobileSideW : sideW,
         display: "flex", flexDirection: "column",
-        transition: "width 0.26s cubic-bezier(0.4,0,0.2,1)",
-        zIndex: 50, overflow: "hidden",
-      }} className="bg-card">
+        transition: "width 0.26s cubic-bezier(0.4,0,0.2,1), transform 0.28s cubic-bezier(0.4,0,0.2,1)",
+        transform: isMobile ? (mobileOpen ? 'translateX(0)' : `translateX(-${mobileSideW}px)`) : 'translateX(0)',
+        zIndex: isMobile ? 50 : 50, overflow: "hidden",
+      }} className="bg-card border-r border-border">
         <div className="sidebar-glow-line" />
 
         <div style={{
@@ -249,10 +269,11 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                 return (
                   <Link
                     key={href} href={href} prefetch={true}
+                    onClick={() => isMobile && setMobileOpen(false)}
                     className={`nav-link ${active ? "active" : ""}`}
                     style={{
-                      padding: collapsed ? "9px 0" : "8px 10px",
-                      justifyContent: collapsed ? "center" : "flex-start",
+                      padding: (!isMobile && collapsed) ? "9px 0" : "8px 10px",
+                      justifyContent: (!isMobile && collapsed) ? "center" : "flex-start",
                       color: active ? "var(--foreground)" : "var(--muted-foreground)",
                       gap: 10, marginBottom: 2,
                     }}
@@ -415,13 +436,23 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
       {/* ── TOPBAR ── */}
       <header
-        className="fixed top-0 right-0 z-40 h-[60px] bg-background/80 backdrop-blur-xl border-b border-border flex items-center px-6 gap-4 transition-all duration-300"
-        style={{ left: sideW }}
+        className="fixed top-0 right-0 z-40 h-[60px] bg-background/90 backdrop-blur-xl border-b border-border flex items-center px-4 md:px-6 gap-3 md:gap-4 transition-all duration-300"
+        style={{ left: isMobile ? 0 : sideW }}
       >
-        <div className="flex items-center gap-2 text-[13px]">
-          <span className="text-muted-foreground/50 font-medium">Quadlix</span>
-          <ChevronRight className="size-3 text-muted-foreground/20" />
-          <span className="text-foreground font-bold tracking-tight">{currentPage}</span>
+        {/* Hamburger — mobile only */}
+        {isMobile && (
+          <button
+            onClick={() => setMobileOpen(p => !p)}
+            className="flex md:hidden size-9 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
+          >
+            {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
+          </button>
+        )}
+
+        <div className="flex items-center gap-1.5 text-[13px] min-w-0">
+          <span className="hidden sm:block text-muted-foreground/50 font-medium">Quadlix</span>
+          <ChevronRight className="hidden sm:block size-3 text-muted-foreground/20" />
+          <span className="text-foreground font-bold tracking-tight truncate">{currentPage}</span>
         </div>
 
         <button
@@ -470,7 +501,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
           height: isCustomizer ? "100vh" : undefined,
           overflow: isCustomizer ? "hidden" : undefined,
           paddingTop: isCustomizer ? 0 : (showBanner ? 100 : 60),
-          marginLeft: sideW,
+          marginLeft: sideW, // 0 on mobile since sideW=0
           transition: "all 0.26s cubic-bezier(0.4,0,0.2,1)",
           // Expose shell dimensions as CSS vars for the builder
           ['--shell-sidebar-w' as any]: `${sideW}px`,
