@@ -9,6 +9,7 @@ import { ThemeConfig } from '@/types/theme-types'
 import { NovaHeader, MinimalHeader, EnigmaHeader } from '@/components/store-layouts'
 import Link from 'next/link'
 import { headers } from 'next/headers'
+import { getBaseUrl } from '@/lib/get-base-url'
 
 export const dynamic = 'force-dynamic'
 
@@ -28,12 +29,7 @@ export default async function StoreLayout({
     if (!store) notFound()
 
     // ── Calculate Base URL for Links ──
-    const headerList = await headers()
-    const host = headerList.get("host") || ""
-    const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
-    const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
-    const isPathBased = host === baseDomain || host === `app.${baseDomain}`
-    const baseUrl = isPathBased ? `/${domain}` : ""
+    const baseUrl = await getBaseUrl(domain)
 
     // Parse themeConfig
     let theme: any = null

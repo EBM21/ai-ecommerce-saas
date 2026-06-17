@@ -31,7 +31,7 @@ const STATUS_STYLES: Record<string, { bg: string; text: string; dot: string; lab
     ARCHIVED: { bg: "bg-secondary", text: "text-muted-foreground", dot: "bg-white/30", label: "Archived" },
 }
 
-export default function ProductsClient({ products = [], domain = "" }: { products?: Product[], domain?: string }) {
+export default function ProductsClient({ products = [], domain = "", currency = "USD" }: { products?: Product[], domain?: string, currency?: string }) {
     const [search, setSearch] = useState("")
     const [filter, setFilter] = useState<"ALL" | "ACTIVE" | "DRAFT" | "ARCHIVED">("ALL")
 
@@ -90,7 +90,7 @@ export default function ProductsClient({ products = [], domain = "" }: { product
                         <Zap className="size-5 text-[#c9a96e]" />
                     </div>
                     <p className="text-[11px] font-bold text-muted-foreground uppercase tracking-widest mb-1">Inventory Value</p>
-                    <p className="text-3xl font-bold text-foreground mb-1">${totalValue.toLocaleString(undefined, { maximumFractionDigits: 0 })}</p>
+                    <p className="text-3xl font-bold text-foreground mb-1">{new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(totalValue)}</p>
                     <p className="text-xs font-medium text-emerald-400">Estimated value</p>
                 </div>
 
@@ -235,9 +235,9 @@ export default function ProductsClient({ products = [], domain = "" }: { product
                                                         </div>
                                                     </TableCell>
                                                     <TableCell className="px-4 py-4">
-                                                        <p className="font-bold text-foreground text-[15px]">${product.price.toFixed(2)}</p>
+                                                        <p className="font-bold text-foreground text-[15px]">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(product.price)}</p>
                                                         {product.compareAtPrice && (
-                                                            <p className="text-[11px] text-foreground/20 line-through font-medium mt-0.5">${product.compareAtPrice.toFixed(2)}</p>
+                                                            <p className="text-[11px] text-foreground/20 line-through font-medium mt-0.5">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(product.compareAtPrice)}</p>
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="hidden md:table-cell px-4 py-4 text-center">

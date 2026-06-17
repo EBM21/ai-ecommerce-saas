@@ -113,9 +113,9 @@ export async function getAnalyticsData() {
             const model = genAI.getGenerativeModel({ model: "gemini-1.5-flash" })
             const prompt = `
         You are a business consultant for Quadlix stores. Store metrics:
-        - Total Revenue: $${totalRevenue}
+        - Total Revenue: ${formatMoney(totalRevenue)}
         - Total Orders: ${totalOrders}
-        - Avg Order Value: $${avgOrderValue.toFixed(2)}
+        - Avg Order Value: ${formatMoney(avgOrderValue)}
         - Active Products: ${activeProducts}
         - Items Low on Stock: ${lowStockCount}
         

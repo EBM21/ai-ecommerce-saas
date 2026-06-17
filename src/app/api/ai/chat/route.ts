@@ -9,9 +9,12 @@ export async function POST(req: Request) {
         const { messages, storeId, domain } = await req.json()
         
         // 1. Fetch store and products to give context to AI
-        const store = await prisma.store.findUnique({
-            where: { id: storeId },
-            include: {
+        const store = await prisma.store.findFirst({
+            where: { OR: [{ subdomain: domain }, { customDomain: domain }] },
+            select: { 
+                name: true, 
+                email: true, 
+                themeConfig: true,
                 products: {
                     where: { status: 'ACTIVE' },
                     select: { title: true, price: true, description: true, id: true }
@@ -21,9 +24,18 @@ export async function POST(req: Request) {
 
         if (!store) return NextResponse.json({ error: "Store not found" }, { status: 404 })
 
-        const productContext = store.products.map(p => 
-            `- ${p.title}: $${p.price}. ${p.description?.substring(0, 100)}... (Link: /${domain}/product/${p.id})`
-        ).join("\n")
+        let currency = 'USD'
+        if (store.themeConfig) {
+            try {
+                const theme = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
+                currency = theme?.branding?.currency || 'USD'
+            } catch (e) {}
+        }
+
+        const productContext = store.products.map(p => {
+            const formattedPrice = new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(Number(p.price))
+            return `- ${p.title}: ${formattedPrice}. ${p.description?.substring(0, 100)}... (Link: /${domain}/product/${p.id})`
+        }).join("\n")
 
         const systemPrompt = `
             You are a helpful, professional AI Sales Assistant for "${store.name}".

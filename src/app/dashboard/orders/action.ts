@@ -31,6 +31,15 @@ export async function getOrders() {
             orderBy: { createdAt: 'desc' }
         })
 
+        // Extract currency from themeConfig
+        let currency = 'USD'
+        if (store.themeConfig) {
+            try {
+                const theme = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
+                currency = theme?.branding?.currency || 'USD'
+            } catch (e) {}
+        }
+
         // 3. Data ko serialize karein (Frontend k liye clean format)
         const formattedOrders = orders.map((order: any) => ({
             id: order.id,
@@ -44,7 +53,7 @@ export async function getOrders() {
             shippingAddress: order.shippingAddress
         }))
 
-        return { success: true, data: formattedOrders }
+        return { success: true, data: formattedOrders, currency }
     } catch (error) {
         console.error("Orders fetch karne mein masla aya:", error)
         return { success: false, error: 'Failed to fetch orders' }

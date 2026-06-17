@@ -13,11 +13,21 @@ export default async function ProductsPage() {
 
   // 1. User ka store find karein
   const store = await prisma.store.findFirst({
-    where: { ownerId: user.id }
+    where: { ownerId: user.id },
+    select: { id: true, customDomain: true, subdomain: true, themeConfig: true }
   })
 
   if (!store) {
     return <div className="p-8 text-foreground">Please create a store first.</div>
+  }
+
+  // Extract currency
+  let currency = 'USD'
+  if (store.themeConfig) {
+      try {
+          const theme = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
+          currency = theme?.branding?.currency || 'USD'
+      } catch (e) {}
   }
 
   // 2. Database se products fetch karein
@@ -40,5 +50,5 @@ export default async function ProductsPage() {
   }))
 
   // 4. Client component ko data pass karein
-  return <ProductsClient products={formattedProducts} domain={store.customDomain || store.subdomain} />
+  return <ProductsClient products={formattedProducts} domain={store.customDomain || store.subdomain} currency={currency} />
 }

@@ -131,7 +131,7 @@ export default async function AccountPage({ params }: { params: Promise<{ domain
                                     <div className="flex items-center gap-6 w-full sm:w-auto justify-between sm:justify-end">
                                         <div className="text-right">
                                             <p className="text-xs font-bold opacity-40 uppercase tracking-widest mb-0.5">Total</p>
-                                            <p className="font-black">${Number(order.totalAmount).toFixed(2)}</p>
+                                            <p className="font-black">{new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(Number(order.totalAmount))}</p>
                                         </div>
                                         <div className={`px-4 py-1.5 rounded-full text-[10px] font-black uppercase tracking-widest border ${
                                             order.status === 'PAID' || order.status === 'FULFILLED' 

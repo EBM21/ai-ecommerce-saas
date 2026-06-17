@@ -247,11 +247,11 @@ export default function ProductClient({
 
             <div className="flex items-end gap-4 mb-8">
               <span className="text-4xl font-extrabold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/70">
-                ${new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(Number(currentPrice))}
+                {new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(Number(currentPrice))}
               </span>
               {currentComparePrice && (
                 <span className="text-xl text-muted-foreground/60 line-through font-medium mb-1">
-                  ${new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(Number(currentComparePrice))}
+                  {new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(Number(currentComparePrice))}
                 </span>
               )}
             </div>

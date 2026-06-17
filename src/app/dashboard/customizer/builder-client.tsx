@@ -1917,8 +1917,8 @@ export default function VisualBuilder({
                                                             <VisualBuilderRenderer
                                                                 blocks={[block]}
                                                                 products={products}
-                                                                domain=""
-                                                                baseUrl=""
+                                                                domain={storeDomain || ""}
+                                                                baseUrl={storeDomain ? `/${storeDomain}` : ""}
                                                                 isEditMode={!isPreview}
                                                                 activeBlockId={activeBlockId}
                                                                 onDeleteBlock={deleteBlock}

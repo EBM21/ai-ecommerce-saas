@@ -25,6 +25,7 @@ import {
 export default function OrdersPage() {
     const [searchQuery, setSearchQuery] = useState("")
     const [orders, setOrders] = useState<any[]>([])
+    const [currency, setCurrency] = useState('USD')
     const [loading, setLoading] = useState(true)
     const [updatingId, setUpdatingId] = useState<string | null>(null)
     const [selectedOrder, setSelectedOrder] = useState<any | null>(null)
@@ -40,9 +41,12 @@ export default function OrdersPage() {
         const result = await getOrders()
         if (result.success && result.data) {
             setOrders(result.data)
+            if (result.currency) setCurrency(result.currency)
         }
         setLoading(false)
     }
+
+    const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val)
 
     const handleStatusUpdate = async (orderId: string, newStatus: any) => {
         setUpdatingId(orderId)
@@ -143,7 +147,7 @@ export default function OrdersPage() {
                 {[
                     { label: "Total Orders", val: orders.length.toString(), sub: "All time" },
                     { label: "Pending Fulfillment", val: orders.filter(o => o.status === 'PENDING' || o.status === 'PAID').length.toString(), sub: "Requires attention" },
-                    { label: "Total Revenue", val: `$${orders.reduce((acc, curr) => acc + curr.totalAmount, 0).toLocaleString()}`, sub: "Generated so far" },
+                    { label: "Total Revenue", val: formatMoney(orders.reduce((acc, curr) => acc + curr.totalAmount, 0)), sub: "Generated so far" },
                     { label: "Fulfilled", val: orders.filter(o => o.status === 'FULFILLED').length.toString(), sub: "Successfully completed" },
                 ].map((stat, i) => (
                     <div key={i} className="p-5 rounded-2xl bg-card border border-border relative overflow-hidden group">
@@ -236,7 +240,7 @@ export default function OrdersPage() {
                                         </td>
                                         <td className="px-6 py-4 text-foreground/80">{order.itemsCount} items</td>
                                         <td className="px-6 py-4 font-semibold text-foreground">
-                                            ${order.totalAmount.toFixed(2)}
+                                            {formatMoney(order.totalAmount)}
                                         </td>
                                         <td className="px-6 py-4 text-right">
                                             <div className="flex items-center justify-end gap-2">
@@ -303,7 +307,7 @@ export default function OrdersPage() {
                                 </div>
                                 <div className="p-5 rounded-2xl bg-secondary/50 border border-border">
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Total Paid</p>
-                                    <p className="text-xl font-black text-foreground">${selectedOrder.totalAmount.toFixed(2)}</p>
+                                    <p className="font-black text-2xl text-foreground">{formatMoney(selectedOrder.totalAmount)}</p>
                                 </div>
                             </div>
 
@@ -357,10 +361,10 @@ export default function OrdersPage() {
                                                     {item.variantName && (
                                                         <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{item.variantName}</p>
                                                     )}
-                                                    <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × ${item.priceAtPurchase.toFixed(2)}</p>
+                                                    <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × {formatMoney(item.priceAtPurchase)}</p>
                                                 </div>
                                             </div>
-                                            <p className="font-black text-sm">${(item.quantity * item.priceAtPurchase).toFixed(2)}</p>
+                                            <p className="font-black text-sm">{formatMoney(item.quantity * item.priceAtPurchase)}</p>
                                         </div>
                                     ))}
                                 </div>
