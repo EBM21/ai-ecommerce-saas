@@ -1550,12 +1550,12 @@ export default function VisualBuilder({
                         </a>
 
                         {/* Page selector */}
-                        <div className="flex items-center gap-1 bg-secondary border border-border rounded-lg px-2.5 py-1.5 min-w-0 max-w-[160px] xl:max-w-[220px]">
-                            <Globe className="size-3 text-muted-foreground shrink-0" />
+                        <div className="flex items-center gap-1 bg-secondary border border-border rounded-lg px-2 py-1.5 min-w-0 max-w-[90px] sm:max-w-[160px] xl:max-w-[220px]">
+                            <Globe className="size-3 text-muted-foreground shrink-0 hidden sm:block" />
                             <select
                                 value={currentPage}
                                 onChange={e => { setCurrentPage(e.target.value); setActiveBlockId(null) }}
-                                className="bg-transparent text-xs font-semibold border-none outline-none cursor-pointer min-w-0 w-full truncate"
+                                className="bg-transparent text-[10px] sm:text-xs font-semibold border-none outline-none cursor-pointer min-w-0 w-full truncate"
                             >
                                 <option value="home">Home</option>
                                 {(config.customPages || []).map(p => (
@@ -1594,11 +1594,11 @@ export default function VisualBuilder({
                     </div>
 
                     {/* Right: panel toggles + preview + publish */}
-                    <div className="flex items-center gap-1.5 shrink-0">
+                    <div className="flex items-center gap-1 sm:gap-1.5 shrink-0">
                         {/* Mobile: toggle left panel */}
                         <button
                             onClick={() => setLeftPanelOpen(p => !p)}
-                            className="flex xl:hidden size-8 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                            className="flex xl:hidden size-8 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
                             title="Toggle Elements"
                         >
                             <Layout className="size-3.5" />
@@ -1607,7 +1607,7 @@ export default function VisualBuilder({
                         {activeBlock && (
                             <button
                                 onClick={() => setRightPanelOpen(p => !p)}
-                                className="flex xl:hidden size-8 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all"
+                                className="flex xl:hidden size-8 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
                                 title="Toggle Properties"
                             >
                                 <Settings2 className="size-3.5" />
@@ -1615,7 +1615,7 @@ export default function VisualBuilder({
                         )}
 
                         <button onClick={() => setIsPreview(!isPreview)}
-                            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold transition-all border ${
+                            className={`flex items-center gap-1.5 px-2.5 sm:px-3 py-1.5 rounded-lg text-xs font-bold transition-all border shrink-0 ${
                                 isPreview
                                     ? 'bg-primary/10 text-primary border-primary/30'
                                     : 'border-border text-muted-foreground hover:text-foreground'
@@ -1625,9 +1625,9 @@ export default function VisualBuilder({
                         </button>
 
                         <button onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-black hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 shadow-md shadow-primary/20">
+                            className="flex items-center gap-1.5 px-3 sm:px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-black hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 shadow-md shadow-primary/20 shrink-0">
                             {isSaving ? <RefreshCw className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                            <span className="hidden sm:inline">Publish</span>
+                            <span>Publish</span>
                         </button>
                     </div>
                 </div>
