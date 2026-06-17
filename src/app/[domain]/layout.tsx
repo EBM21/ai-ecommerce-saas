@@ -50,8 +50,15 @@ export default async function StoreLayout({
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
-    const { layoutId, blocks } = theme || {}
-    const isBuilder = blocks && blocks.length > 0
+    const { layoutId, blocks, pageBlocks } = theme || {}
+    // Check both legacy blocks AND new multi-page builder blocks
+    const allPageBlocks: any[] = [
+        ...(blocks || []),
+        ...Object.values(pageBlocks || {}).flat()
+    ]
+    const isBuilder = allPageBlocks.length > 0
+    const hasBuilderHeader = allPageBlocks.some((b: any) => b.type?.startsWith('header-'))
+    const hasBuilderFooter = allPageBlocks.some((b: any) => b.type?.startsWith('footer-'))
 
     return (
         <CartProvider domain={domain}>
@@ -69,7 +76,7 @@ export default async function StoreLayout({
                 }}
             >
                 {/* ── HEADER ── */}
-                {isBuilder && blocks.some((b: any) => b.type.startsWith('header-')) ? null : (
+                {hasBuilderHeader ? null : (
                     <StoreHeader theme={theme} user={user} domain={domain} baseUrl={baseUrl} />
                 )}
                 
@@ -78,7 +85,7 @@ export default async function StoreLayout({
                 </main>
 
                 {/* ── FOOTER ── */}
-                {isBuilder && blocks.some((b: any) => b.type.startsWith('footer-')) ? null : (
+                {hasBuilderFooter ? null : (
                     <StoreFooter theme={theme} domain={domain} baseUrl={baseUrl} />
                 )}
             </div>

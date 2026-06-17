@@ -51,12 +51,12 @@ export default async function DashboardLayout({ children }: { children: React.Re
                     <p className="text-muted-foreground text-sm leading-relaxed">
                         We couldn't establish a secure connection to your store dashboard. This usually happens due to a temporary database timeout.
                     </p>
-                    <button 
-                        onClick={() => window.location.reload()}
-                        className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-white transition-all"
+                    <a 
+                        href="/dashboard"
+                        className="w-full py-3 rounded-xl bg-indigo-600 hover:bg-indigo-500 font-bold text-white transition-all text-center inline-block"
                     >
                         Try Reconnecting
-                    </button>
+                    </a>
                 </div>
             </div>
         )

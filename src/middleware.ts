@@ -5,37 +5,51 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const hostname = request.headers.get("host") || ""
 
-  // Define the base domains
-  const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
-  const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
+  // ── Env-configured root domain (set this on Vercel!) ──
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"
 
-  // Parse the subdomain
-  const currentHost = hostname.replace(`.${baseDomain}`, "")
-  
-  // ── Main SaaS Dashboard Check ──
-  // We are on the dashboard if:
-  // 1. Host is exactly the base domain (e.g., quadlix.com)
-  // 2. Host is the 'app' subdomain (e.g., app.quadlix.com)
-  // 3. Or it's the specific Vercel deployment URL (if configured)
-  const isDashboard = hostname === baseDomain || hostname === `app.${baseDomain}` || hostname === 'ai-ecommerce-saas.vercel.app'
+  // ── Detect if we're running locally ──
+  const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
+
+  // ── On local: always dashboard (no subdomain routing locally) ──
+  if (isLocal) {
+    return await updateSession(request)
+  }
+
+  // ── Strip the root domain suffix to get the subdomain ──
+  // e.g. "mystore.quadlix.com" → "mystore"
+  // e.g. "quadlix.com" → "quadlix.com" (no change = no subdomain)
+  const withoutRoot = hostname.replace(`.${rootDomain}`, "")
+
+  // ── Dashboard cases ──
+  // 1. Exact root domain: quadlix.com
+  // 2. App subdomain: app.quadlix.com
+  // 3. No subdomain stripped (unknown domain or Vercel preview URL)
+  const isDashboard =
+    hostname === rootDomain ||
+    hostname === `app.${rootDomain}` ||
+    withoutRoot === hostname || // no subdomain stripped = root or unknown host
+    hostname.endsWith('.vercel.app') // all Vercel preview/deployment URLs → dashboard
 
   if (isDashboard) {
-    // We are on the SaaS dashboard. Run the auth middleware.
     return await updateSession(request)
   }
 
   // ── Storefront Subdomain Logic ──
-  // Exclude static assets and api routes from rewrite
+  const currentHost = withoutRoot // e.g. "mystore"
+
+  // Pass through Next.js internals and API routes
   if (
-    url.pathname.startsWith('/_next') || 
+    url.pathname.startsWith('/_next') ||
     url.pathname.startsWith('/api') ||
     url.pathname.startsWith('/static') ||
+    url.pathname === '/favicon.ico' ||
     url.pathname.startsWith(`/${currentHost}`) // Prevent double rewrite
   ) {
     return NextResponse.next()
   }
 
-  // Rewrite to /[domain]/[path]
+  // Rewrite storefront: /path → /[domain]/path
   url.pathname = `/${currentHost}${url.pathname}`
   return NextResponse.rewrite(url)
 }
