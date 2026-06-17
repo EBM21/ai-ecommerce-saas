@@ -6,25 +6,21 @@ export async function getBaseUrl(domain: string) {
         const host = headerList.get("host") || ""
         const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
         
-        let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || ""
-        if (!rootDomain) {
-            rootDomain = isLocal ? 'localhost:3000' : 'quadlix.com'
-        }
-        // Strip leading dot if it exists for exact matches
-        const cleanRoot = rootDomain.startsWith('.') ? rootDomain.substring(1) : rootDomain
+        let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"
+        // Strip leading dot if it exists just in case
+        rootDomain = rootDomain.startsWith('.') ? rootDomain.substring(1) : rootDomain
         
-        const withoutRoot = host.replace(rootDomain.startsWith('.') ? rootDomain : `.${rootDomain}`, "")
-        
-        const isPathBased = 
-            host === cleanRoot || 
-            host === `app.${cleanRoot}` || 
-            withoutRoot === host || 
+        const isDashboard = 
+            host === `quadlify.${rootDomain}` ||
+            host === rootDomain || 
             host.endsWith('.vercel.app') || 
             isLocal
-            
-        return isPathBased ? `/${domain}` : ""
+
+        // If we are on the dashboard or local, we need path-based routing (e.g. /storename) to preview stores.
+        // If we are on a custom domain/subdomain, we are at the root (/) and don't need the path.
+        return isDashboard ? `/${domain}` : ""
     } catch (e) {
-        // Fallback for edge cases where headers aren't available
+        // Fallback for edge cases
         return `/${domain}`
     }
 }

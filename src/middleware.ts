@@ -5,8 +5,9 @@ export async function middleware(request: NextRequest) {
   const url = request.nextUrl
   const hostname = request.headers.get("host") || ""
 
-  // ── Env-configured root domain (set this on Vercel!) ──
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || ".quadlix.com"
+  // ── Env-configured root domain (set this on Vercel to quadlix.com) ──
+  let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"
+  rootDomain = rootDomain.startsWith('.') ? rootDomain.substring(1) : rootDomain
 
   // ── Detect if we're running locally ──
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
@@ -16,27 +17,23 @@ export async function middleware(request: NextRequest) {
     return await updateSession(request)
   }
 
-  // ── Strip the root domain suffix to get the subdomain ──
-  // e.g. "mystore.quadlix.com" → "mystore"
-  // e.g. "quadlix.com" → "quadlix.com" (no change = no subdomain)
-  const withoutRoot = hostname.replace(`.${rootDomain}`, "")
-
   // ── Dashboard cases ──
-  // 1. Exact root domain: quadlix.com
-  // 2. App subdomain: app.quadlix.com
-  // 3. No subdomain stripped (unknown domain or Vercel preview URL)
+  // 1. App subdomain: quadlify.quadlix.com
+  // 2. Exact root domain: quadlix.com
+  // 3. Vercel preview URL
   const isDashboard =
+    hostname === `quadlify.${rootDomain}` ||
     hostname === rootDomain ||
-    hostname === `app.${rootDomain}` ||
-    withoutRoot === hostname || // no subdomain stripped = root or unknown host
-    hostname.endsWith('.vercel.app') // all Vercel preview/deployment URLs → dashboard
+    hostname.endsWith('.vercel.app')
 
   if (isDashboard) {
     return await updateSession(request)
   }
 
   // ── Storefront Subdomain Logic ──
-  const currentHost = withoutRoot // e.g. "mystore"
+  // Strip the root domain suffix to get the subdomain
+  // e.g. "mystore.quadlix.com" → "mystore"
+  const currentHost = hostname.replace(`.${rootDomain}`, "")
 
   // Pass through Next.js internals and API routes
   if (
