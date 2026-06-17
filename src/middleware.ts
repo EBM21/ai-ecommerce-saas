@@ -6,7 +6,7 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || ""
 
   // ── Env-configured root domain (set this on Vercel!) ──
-  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"
+  const rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || ".quadlix.com"
 
   // ── Detect if we're running locally ──
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
