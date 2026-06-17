@@ -1625,15 +1625,15 @@ export default function VisualBuilder({
                         </button>
 
                         <button onClick={handleSave} disabled={isSaving}
-                            className="flex items-center gap-1.5 px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-black hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 shadow-md shadow-primary/20">
+                            className="flex items-center gap-1.5 px-2 sm:px-4 py-1.5 bg-primary text-white rounded-lg text-xs font-black hover:bg-primary/90 active:scale-95 transition-all disabled:opacity-50 shadow-md shadow-primary/20">
                             {isSaving ? <RefreshCw className="size-3.5 animate-spin" /> : <Save className="size-3.5" />}
-                            Publish
+                            <span className="hidden sm:inline">Publish</span>
                         </button>
                     </div>
                 </div>
 
                 {/* ── MAIN CONTENT ── */}
-                <div className="flex flex-1 overflow-hidden min-h-0">
+                <div className="flex flex-1 overflow-hidden min-h-0 relative">
 
                     {/* ── LEFT SIDEBAR ── */}
                     <AnimatePresence initial={false}>
@@ -1644,7 +1644,7 @@ export default function VisualBuilder({
                                 animate={{ width: 'var(--left-panel-w, 256px)', opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                className="border-r border-border flex flex-col bg-card/50 backdrop-blur-xl shrink-0 z-20 overflow-hidden"
+                                className="absolute xl:relative h-full left-0 shadow-2xl xl:shadow-none border-r border-border flex flex-col bg-card/50 backdrop-blur-xl shrink-0 z-20 overflow-hidden"
                                 style={{ ['--left-panel-w' as any]: '256px', width: 256 }}
                             >
                                 {/* Tab Bar */}
@@ -1776,14 +1776,16 @@ export default function VisualBuilder({
                                             : 'rounded-xl border border-border/60 bg-background shadow-xl shadow-black/5 overflow-hidden relative'
                                     }`}
                                 >
-                                    {/* Live CSS variables */}
+                                    {/* Scoped CSS — applied ONLY inside .preview-canvas, not to :root */}
                                     <style>{`
-                                        :root {
+                                        .preview-canvas {
                                             --primary: ${config.branding.primaryColor};
                                             --background: ${config.styles.bgColor};
                                             --foreground: ${config.styles.textColor};
                                             --card: ${config.styles.cardBg};
                                             --border: ${config.styles.borderColor};
+                                            background-color: ${config.styles.bgColor};
+                                            color: ${config.styles.textColor};
                                         }
                                     `}</style>
 
@@ -1834,7 +1836,7 @@ export default function VisualBuilder({
                                                         onDelete={() => deleteBlock(block.id)}
                                                         onDuplicate={() => duplicateBlock(block.id)}
                                                     >
-                                                        <div style={blockStyle} className="w-full">
+                                                        <div style={blockStyle} className="w-full preview-canvas">
                                                             <VisualBuilderRenderer
                                                                 blocks={[block]}
                                                                 products={products}
@@ -1889,7 +1891,7 @@ export default function VisualBuilder({
                                 animate={{ width: 280, opacity: 1 }}
                                 exit={{ width: 0, opacity: 0 }}
                                 transition={{ duration: 0.2, ease: 'easeInOut' }}
-                                className="border-l border-border flex flex-col bg-card/50 backdrop-blur-xl shrink-0 z-20 overflow-hidden"
+                                className="border-l border-border flex flex-col bg-card/50 backdrop-blur-xl shrink-0 z-20 overflow-hidden absolute xl:relative h-full right-0 shadow-2xl xl:shadow-none"
                                 style={{ width: 280 }}
                             >
                                 {activeBlock ? (
