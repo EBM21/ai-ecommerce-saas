@@ -95,8 +95,13 @@ export async function launchAdCampaign(data: { platform: string, productId: stri
         if (!user) return { success: false, error: "Unauthorized" }
 
         const store = await prisma.store.findFirst({ where: { ownerId: user.id } })
+        
+        if (!store) {
+            return { success: false, error: "Store not found" }
+        }
+
         // Bypass subscription check for testing
-        // if (!store?.subscriptionActive) {
+        // if (!store.subscriptionActive) {
         //     return { success: false, error: "Active subscription required to run ads." }
         // }
 
