@@ -48,6 +48,38 @@ export default function ProductsClient({ products = [], domain = "", currency = 
     const activeCount = safeProducts.filter(p => p?.status === "ACTIVE").length
     const lowStock = safeProducts.filter(p => (p?.inventoryCount || 0) > 0 && (p?.inventoryCount || 0) < 10).length
 
+    const handleExport = () => {
+        if (!safeProducts || safeProducts.length === 0) {
+            alert("No products to export.")
+            return
+        }
+        
+        const headers = ["Product ID", "Title", "Description", "Price", "Compare At Price", "Inventory Count", "Status", "Created At"]
+        const csvContent = [
+            headers.join(","),
+            ...safeProducts.map(p => [
+                p.id,
+                `"${(p.title || "").replace(/"/g, '""')}"`,
+                `"${(p.description || "").replace(/"/g, '""')}"`,
+                p.price,
+                p.compareAtPrice || "",
+                p.inventoryCount,
+                p.status,
+                `"${new Date(p.createdAt).toLocaleString()}"`
+            ].join(","))
+        ].join("\n")
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", `products_export.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -62,7 +94,7 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                     <p className="text-muted-foreground font-medium">Manage your catalog and monitor AI-optimized assets.</p>
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <button className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
+                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
                         <Download className="size-4" /> Export CSV
                     </button>
                     <Link href="/dashboard/products/new">

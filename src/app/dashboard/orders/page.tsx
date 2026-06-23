@@ -93,6 +93,37 @@ export default function OrdersPage() {
         window.location.href = `mailto:${email}?subject=Update regarding your order`
     }
 
+    const handleExport = () => {
+        if (!orders || orders.length === 0) {
+            toast.error("No orders to export")
+            return
+        }
+        
+        const headers = ["Order ID", "Date", "Customer Name", "Customer Email", "Status", "Items Count", "Total Amount"]
+        const csvContent = [
+            headers.join(","),
+            ...orders.map(o => [
+                o.displayId || o.id,
+                `"${new Date(o.createdAt).toLocaleString()}"`,
+                `"${o.customerName}"`,
+                `"${o.customerEmail}"`,
+                o.status,
+                o.itemsCount,
+                o.totalAmount
+            ].join(","))
+        ].join("\n")
+        
+        const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' })
+        const url = URL.createObjectURL(blob)
+        const link = document.createElement("a")
+        link.setAttribute("href", url)
+        link.setAttribute("download", `orders_export.csv`)
+        link.style.visibility = 'hidden'
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+    }
+
     const filteredOrders = orders.filter(order =>
         order.displayId.toLowerCase().includes(searchQuery.toLowerCase()) ||
         order.customerName.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -133,7 +164,7 @@ export default function OrdersPage() {
                     <p className="text-sm text-muted-foreground font-medium">Manage and fulfill your customer orders efficiently.</p>
                 </div>
                 <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
+                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
                         <Download className="size-4" />
                         Export CSV
                     </button>

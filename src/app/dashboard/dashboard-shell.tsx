@@ -13,7 +13,7 @@ import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
   Bell, Search, LogOut, Zap, Command, X, Palette,
-  User, CreditCard, HelpCircle, ChevronUp, AlertCircle, Menu
+  User, CreditCard, HelpCircle, ChevronUp, AlertCircle, Menu, Megaphone
 } from "lucide-react"
 
 type NavItem = {
@@ -42,6 +42,7 @@ const NAV_GROUPS: NavGroup[] = [
     label: "Intelligence",
     items: [
       { label: "AI Studio", href: "/dashboard/ai-studio", icon: Sparkles, badge: "New"},
+      { label: "Marketing", href: "/dashboard/marketing", icon: Megaphone, badge: "AI" },
     ],
   },
   {
