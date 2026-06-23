@@ -34,11 +34,11 @@ export default function MarketingPage() {
     async function loadData() {
         const res = await getMarketingData()
         if (res?.success) {
-            setIsSubscribed(res.isSubscribed)
-            setHasMeta(res.hasMeta)
-            setHasGoogle(res.hasGoogle)
-            setProducts(res.products)
-            setCampaigns(res.campaigns)
+            setIsSubscribed(res.isSubscribed || false)
+            setHasMeta(res.hasMeta || false)
+            setHasGoogle(res.hasGoogle || false)
+            setProducts(res.products || [])
+            setCampaigns(res.campaigns || [])
         }
         setIsLoading(false)
     }
@@ -99,7 +99,7 @@ export default function MarketingPage() {
         startTransition(async () => {
             const res = await toggleCampaignStatus(id, currentStatus)
             if (res.success) {
-                toast.success(`Campaign ${res.newStatus.toLowerCase()}`)
+                toast.success(`Campaign ${res.newStatus?.toLowerCase() || "updated"}`)
                 loadData()
             } else {
                 toast.error(res.error)
