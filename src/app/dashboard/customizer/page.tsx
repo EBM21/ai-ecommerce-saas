@@ -81,7 +81,7 @@ export default async function CustomizerPage() {
     }))
 
     return (
-        <CartProvider>
+        <CartProvider domain={store.subdomain}>
             <VisualBuilder 
                 initialConfig={config} 
                 products={serializedProducts} 
