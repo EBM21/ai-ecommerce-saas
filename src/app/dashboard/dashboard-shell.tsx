@@ -72,7 +72,7 @@ export default function DashboardShell({ children, user, lowStockProducts = [] }
   const [timeLeft, setTimeLeft] = useState<{days: number, hours: number} | null>(null)
   const [isExpired, setIsExpired] = useState(false)
   const [isSubscribed, setIsSubscribed] = useState(true)
-  const [storeDomain, setStoreDomain] = useState<string>("")
+  const [previewUrl, setPreviewUrl] = useState<string>("/store")
 
   const pathname = usePathname()
   const router = useRouter()
@@ -85,7 +85,11 @@ export default function DashboardShell({ children, user, lowStockProducts = [] }
   useEffect(() => {
     getStoreTrialStatus().then((store: any) => {
       if (store) {
-        if (store.subdomain) setStoreDomain(store.subdomain)
+        if (store.customDomain && store.customDomainStatus === 'ACTIVE') {
+            setPreviewUrl(`http://${store.customDomain}`)
+        } else if (store.subdomain) {
+            setPreviewUrl(`http://${store.subdomain}.quadlix.com`)
+        }
         if (store.trialEndsAt) {
           setIsSubscribed(store.subscriptionActive)
           
@@ -291,7 +295,7 @@ export default function DashboardShell({ children, user, lowStockProducts = [] }
               {group.items.map(({ label, href, icon: Icon, badge }) => {
                 const active = pathname === href || pathname.startsWith(href + "/")
                 const isStoreLink = href === "/store"
-                const targetHref = isStoreLink && storeDomain ? getStoreUrl(storeDomain) : href
+                const targetHref = isStoreLink ? previewUrl : href
 
                 const LinkComponent = isStoreLink ? 'a' : Link
 

@@ -7,7 +7,8 @@ import { redirect } from "next/navigation"
 import { headers } from "next/headers"
 
 async function getBaseUrl(domain: string) {
-    const host = (await headers()).get("host") || ""
+    const hostHeader = (await headers()).get("host") || ""
+    const host = hostHeader.split(":")[0]
     const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
     const baseDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || (isLocal ? 'localhost:3000' : 'quadlix.com')
     return (host === baseDomain || host === `app.${baseDomain}`) ? `/${domain}` : ""

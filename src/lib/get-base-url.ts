@@ -3,7 +3,8 @@ import { headers } from "next/headers"
 export async function getBaseUrl(domain: string) {
     try {
         const headerList = await headers()
-        const host = headerList.get("host") || ""
+        const hostHeader = headerList.get("host") || ""
+        const host = hostHeader.split(":")[0]
         const isLocal = host.includes('localhost') || host.includes('127.0.0.1')
         
         let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"

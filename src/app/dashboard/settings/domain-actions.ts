@@ -137,12 +137,15 @@ export async function verifyDomainDNS(domain: string) {
         let isVerified = false
 
         try {
+            const resolver = new dns.Resolver()
+            resolver.setServers(['8.8.8.8', '1.1.1.1'])
+
             if (store.customDomainVerificationType === 'A') {
-                const records = await dns.resolve4(domain)
-                isVerified = records.includes(store.customDomainVerificationValue!)
+                const records = await resolver.resolve4(domain)
+                isVerified = records.some(r => r === store.customDomainVerificationValue)
             } else if (store.customDomainVerificationType === 'CNAME') {
-                const records = await dns.resolveCname(domain)
-                isVerified = records.includes(store.customDomainVerificationValue!)
+                const records = await resolver.resolveCname(domain)
+                isVerified = records.some(r => r === store.customDomainVerificationValue)
             }
         } catch (dnsErr) {
             console.warn("DNS check failed:", dnsErr)

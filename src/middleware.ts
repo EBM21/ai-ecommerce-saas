@@ -3,7 +3,9 @@ import { updateSession } from '@/utils/supabase/middleware'
 
 export async function middleware(request: NextRequest) {
   const url = request.nextUrl
-  const hostname = request.headers.get("host") || ""
+  // Extract host header and strip any port number
+  const hostHeader = request.headers.get("host") || ""
+  const hostname = hostHeader.split(":")[0]
 
   // ── Env-configured root domain (set this on Vercel to quadlix.com) ──
   let rootDomain = process.env.NEXT_PUBLIC_ROOT_DOMAIN || "quadlix.com"
