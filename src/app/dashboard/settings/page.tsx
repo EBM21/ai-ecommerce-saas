@@ -29,7 +29,7 @@ export default function SettingsPage() {
 function SettingsContent() {
     const searchParams = useSearchParams()
     
-    const [activeTab, setActiveTab] = useState<"GENERAL" | "DOMAIN" | "PAYMENTS" | "BILLING" | "ADVANCED">("GENERAL")
+    const [activeTab, setActiveTab] = useState<"GENERAL" | "DOMAIN" | "PAYMENTS" | "BILLING" | "POLICIES" | "ADVANCED">("GENERAL")
     const [isLoading, setIsLoading] = useState(true)
     const [isSaving, setIsSaving] = useState(false)
     const [isUpgrading, setIsUpgrading] = useState(false)
@@ -45,7 +45,8 @@ function SettingsContent() {
     const [formData, setFormData] = useState({
         general: { storeName: "", email: "", phone: "" },
         domain: { subdomain: "", customDomain: "" },
-        payments: { stripePublicKey: "", stripeSecretKey: "" }
+        payments: { stripePublicKey: "", stripeSecretKey: "" },
+        policies: { privacy: "", refund: "", terms: "", shipping: "" }
     })
 
     // Domain Specific State
@@ -69,10 +70,23 @@ function SettingsContent() {
                     setIsSubscribed(s.subscriptionActive || false)
                     setDomainData(s)
                     
+                    let parsedPolicies = { privacy: "", refund: "", terms: "", shipping: "" }
+                    if (s.policies) {
+                        try {
+                            parsedPolicies = typeof s.policies === 'string' ? JSON.parse(s.policies) : s.policies
+                        } catch (e) {}
+                    }
+                    
                     setFormData({
                         general: { storeName: s.name || "", email: s.email || "", phone: s.phone || "" },
                         domain: { subdomain: s.subdomain || "", customDomain: s.customDomain || "" },
-                        payments: { stripePublicKey: s.stripePublicKey || "", stripeSecretKey: s.stripeSecretKey || "" }
+                        payments: { stripePublicKey: s.stripePublicKey || "", stripeSecretKey: s.stripeSecretKey || "" },
+                        policies: { 
+                            privacy: parsedPolicies.privacy || "", 
+                            refund: parsedPolicies.refund || "", 
+                            terms: parsedPolicies.terms || "", 
+                            shipping: parsedPolicies.shipping || "" 
+                        }
                     })
 
                     if (s.trialEndsAt && !s.subscriptionActive) {
@@ -94,7 +108,7 @@ function SettingsContent() {
     // ── 2. TAB SWITCHING ──
     useEffect(() => {
         const tab = searchParams.get("tab")?.toUpperCase()
-        if (tab && ["GENERAL", "DOMAIN", "PAYMENTS", "BILLING", "ADVANCED"].includes(tab)) {
+        if (tab && ["GENERAL", "DOMAIN", "PAYMENTS", "BILLING", "POLICIES", "ADVANCED"].includes(tab)) {
             setActiveTab(tab as any)
         }
     }, [searchParams])
@@ -110,6 +124,7 @@ function SettingsContent() {
                 customDomain: formData.domain.customDomain,
                 stripePublicKey: formData.payments.stripePublicKey,
                 stripeSecretKey: formData.payments.stripeSecretKey,
+                policies: formData.policies
             })
             if (res.success) {
                 setSaveStatus("SAVED")
@@ -198,6 +213,7 @@ function SettingsContent() {
                         <TabButton active={activeTab === "GENERAL"} onClick={() => setActiveTab("GENERAL")} icon={Store} label="General" />
                         <TabButton active={activeTab === "DOMAIN"} onClick={() => setActiveTab("DOMAIN")} icon={Globe} label="Domains" />
                         <TabButton active={activeTab === "PAYMENTS"} onClick={() => setActiveTab("PAYMENTS")} icon={CreditCard} label="Payments" />
+                        <TabButton active={activeTab === "POLICIES"} onClick={() => setActiveTab("POLICIES")} icon={ShieldCheck} label="Policies" />
                         <TabButton active={activeTab === "BILLING"} onClick={() => setActiveTab("BILLING")} icon={Zap} label="Billing" />
                         <TabButton active={activeTab === "ADVANCED"} onClick={() => setActiveTab("ADVANCED")} icon={ShieldAlert} label="Advanced" danger />
                     </nav>
@@ -213,6 +229,19 @@ function SettingsContent() {
                                     <InputField label="Store Name" icon={Store} value={formData.general.storeName} onChange={v => handleChange("general", "storeName", v)} />
                                     <InputField label="Email" icon={Mail} value={formData.general.email} onChange={v => handleChange("general", "email", v)} type="email" />
                                     <InputField label="Phone" icon={Phone} value={formData.general.phone} onChange={v => handleChange("general", "phone", v)} />
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {/* POLICIES */}
+                        {activeTab === "POLICIES" && (
+                            <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
+                                <SectionHeader title="Legal & Policies" description="These will automatically appear in your storefront footer." />
+                                <div className="bg-card border border-border/50 rounded-[2rem] p-8 space-y-6 shadow-sm">
+                                    <TextareaField label="Privacy Policy" value={formData.policies.privacy} onChange={v => handleChange("policies", "privacy", v)} placeholder="Write your privacy policy here..." />
+                                    <TextareaField label="Refund Policy" value={formData.policies.refund} onChange={v => handleChange("policies", "refund", v)} placeholder="Write your refund policy here..." />
+                                    <TextareaField label="Terms of Service" value={formData.policies.terms} onChange={v => handleChange("policies", "terms", v)} placeholder="Write your terms of service here..." />
+                                    <TextareaField label="Shipping Policy" value={formData.policies.shipping} onChange={v => handleChange("policies", "shipping", v)} placeholder="Write your shipping policy here..." />
                                 </div>
                             </motion.div>
                         )}
@@ -419,4 +448,5 @@ function SettingsContent() {
 function SectionHeader({ title, description }: { title: string, description: string }) { return ( <div className="mb-6"><h2 className="text-xl font-bold text-foreground">{title}</h2><p className="text-sm text-muted-foreground mt-1">{description}</p></div> ) }
 function TabButton({ active, onClick, icon: Icon, label, danger }: { active: boolean, onClick: () => void, icon: any, label: string, danger?: boolean }) { return ( <button onClick={onClick} className={`flex items-center gap-3 px-4 py-3 rounded-xl text-sm font-semibold transition-all w-full text-left border ${active ? (danger ? "bg-rose-500/10 border-rose-500/20 text-rose-500" : "bg-indigo-500/10 border-indigo-500/20 text-indigo-400") : "bg-transparent border-transparent text-muted-foreground hover:bg-secondary/50"}`}><Icon className="size-4" />{label}</button> ) }
 function InputField({ label, icon: Icon, value, onChange, placeholder, type = "text" }: { label: string, icon: any, value: string, onChange: (v: string) => void, placeholder?: string, type?: string }) { return ( <div><label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5 block ml-1">{label}</label><div className="relative"><div className="absolute left-4 top-1/2 -translate-y-1/2 text-muted-foreground/40"><Icon className="size-4" /></div><input type={type} value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full bg-secondary/50 border border-border rounded-xl pl-11 pr-4 h-12 text-sm font-medium focus:border-indigo-500 outline-none transition-all" /></div></div> ) }
+function TextareaField({ label, value, onChange, placeholder }: { label: string, value: string, onChange: (v: string) => void, placeholder?: string }) { return ( <div><label className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-2.5 block ml-1">{label}</label><textarea value={value} onChange={e => onChange(e.target.value)} placeholder={placeholder} className="w-full bg-secondary/50 border border-border rounded-xl p-4 min-h-[120px] text-sm font-medium focus:border-indigo-500 outline-none transition-all resize-y" /></div> ) }
 function UsageCard({ label, used, limit, pct }: { label: string, used: string, limit: string, pct: number }) { return ( <div className="bg-card border border-border/50 p-6 rounded-3xl space-y-4 shadow-sm"><div className="flex justify-between items-end"><div><p className="text-[10px] font-bold text-muted-foreground uppercase tracking-widest mb-1">{label}</p><p className="text-xl font-black">{used} <span className="text-xs text-muted-foreground font-medium">/ {limit}</span></p></div><div className="text-[10px] font-bold text-indigo-400">{pct}%</div></div><div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden"><div className="h-full bg-indigo-500 rounded-full" style={{ width: `${pct}%` }} /></div></div> ) }

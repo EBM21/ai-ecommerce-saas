@@ -28,6 +28,12 @@ const updateStoreSettingsSchema = z.object({
   phone: z.string().nullable().optional().or(z.literal('')).transform(val => val === '' ? null : val),
   stripePublicKey: z.string().nullable().optional().or(z.literal('')).transform(val => val === '' ? null : val),
   stripeSecretKey: z.string().nullable().optional().or(z.literal('')).transform(val => val === '' ? null : val),
+  policies: z.object({
+    privacy: z.string().optional(),
+    refund: z.string().optional(),
+    terms: z.string().optional(),
+    shipping: z.string().optional(),
+  }).optional().nullable(),
 })
 
 export async function getStoreSettings() {
@@ -57,6 +63,7 @@ export async function getStoreSettings() {
                 stripePublicKey: store.stripePublicKey,
                 stripeSecretKey: store.stripeSecretKey,
                 plan: store.plan,
+                policies: store.policies,
                 trialEndsAt: store.trialEndsAt?.toISOString() || null,
                 subscriptionActive: store.subscriptionActive,
                 customDomainStatus: store.customDomainStatus,
@@ -102,6 +109,7 @@ export async function updateStoreSettings(data: any) {
                 phone: settings.phone,
                 stripePublicKey: settings.stripePublicKey,
                 stripeSecretKey: settings.stripeSecretKey,
+                policies: settings.policies ? (settings.policies as any) : undefined,
             }
         })
 

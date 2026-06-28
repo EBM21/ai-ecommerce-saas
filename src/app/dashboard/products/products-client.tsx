@@ -231,7 +231,8 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                                         filtered.map((product, i) => {
                                             const style = STATUS_STYLES[product.status] ?? STATUS_STYLES.DRAFT
                                             const imgUrl = product.images?.enhanced || product.images?.raw
-                                            const isLow = product.inventoryCount < 10
+                                            const isOutOfStock = product.inventoryCount === 0
+                                            const isLow = product.inventoryCount > 0 && product.inventoryCount < 10
                                             const addedAt = new Date(product.createdAt).toLocaleDateString("en-US", {
                                                 month: "short", day: "numeric", year: "numeric"
                                             })
@@ -274,10 +275,14 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                                                         )}
                                                     </TableCell>
                                                     <TableCell className="hidden md:table-cell px-4 py-4 text-center">
-                                                        <span className={`text-[15px] font-bold ${isLow ? "text-rose-400" : "text-foreground"}`}>
+                                                        <span className={`text-[15px] font-bold ${isLow || product.inventoryCount === 0 ? "text-rose-400" : "text-foreground"}`}>
                                                             {product.inventoryCount}
                                                         </span>
-                                                        {isLow && <p className="text-[10px] text-rose-400/60 font-bold uppercase mt-1 tracking-wider">Low</p>}
+                                                        {product.inventoryCount === 0 ? (
+                                                            <p className="text-[10px] text-rose-500 font-bold uppercase mt-1 tracking-wider">Out of Stock</p>
+                                                        ) : isLow ? (
+                                                            <p className="text-[10px] text-rose-400/60 font-bold uppercase mt-1 tracking-wider">Low</p>
+                                                        ) : null}
                                                     </TableCell>
                                                     <TableCell className="hidden md:table-cell px-4 py-4">
                                                         <p className="text-[13px] font-medium text-muted-foreground/60">{addedAt}</p>

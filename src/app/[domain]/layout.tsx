@@ -43,6 +43,15 @@ export default async function StoreLayout({
         }
     }
 
+    let policies: any = { privacy: "", refund: "", terms: "", shipping: "" }
+    if (store.policies) {
+        try {
+            policies = typeof store.policies === 'string'
+                ? JSON.parse(store.policies as string)
+                : store.policies
+        } catch (e) {}
+    }
+
     const supabase = await createClient()
     const { data: { user } } = await supabase.auth.getUser()
 
@@ -82,7 +91,7 @@ export default async function StoreLayout({
 
                 {/* ── FOOTER ── */}
                 {hasBuilderFooter ? null : (
-                    <StoreFooter theme={theme} domain={domain} baseUrl={baseUrl} />
+                    <StoreFooter theme={theme} domain={domain} baseUrl={baseUrl} policies={policies} />
                 )}
             </div>
 
@@ -94,8 +103,16 @@ export default async function StoreLayout({
     )
 }
 
-function StoreFooter({ theme, domain, baseUrl = "" }: { theme: ThemeConfig, domain: string, baseUrl?: string }) {
+function StoreFooter({ theme, domain, baseUrl = "", policies }: { theme: ThemeConfig, domain: string, baseUrl?: string, policies?: any }) {
     const { footer, styles, layoutId } = theme
+    
+    const policyLinks = []
+    if (policies?.privacy) policyLinks.push({ label: 'Privacy Policy', href: '/policies/privacy' })
+    if (policies?.refund) policyLinks.push({ label: 'Refund Policy', href: '/policies/refund' })
+    if (policies?.terms) policyLinks.push({ label: 'Terms of Service', href: '/policies/terms' })
+    if (policies?.shipping) policyLinks.push({ label: 'Shipping Policy', href: '/policies/shipping' })
+
+    const allLinks = [...(footer?.links || []), ...policyLinks]
     
     // Minimal Footer
     if (layoutId === 'minimal') {
@@ -104,7 +121,7 @@ function StoreFooter({ theme, domain, baseUrl = "" }: { theme: ThemeConfig, doma
                 <div className="max-w-7xl mx-auto px-10 flex flex-col items-center gap-12">
                     <span className="text-2xl font-light tracking-[0.4em] uppercase">{theme.branding.storeName}</span>
                     <div className="flex gap-12">
-                        {footer.links.map((l, i) => (
+                        {allLinks.map((l, i) => (
                             <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-[10px] font-bold uppercase tracking-widest text-gray-400 no-underline hover:text-black">
                                 {l.label}
                             </Link>
@@ -126,7 +143,7 @@ function StoreFooter({ theme, domain, baseUrl = "" }: { theme: ThemeConfig, doma
                         <p className="text-white/30 text-sm font-bold uppercase tracking-widest max-w-xs leading-relaxed">{footer.text}</p>
                     </div>
                     <div className="flex flex-col items-end gap-4">
-                        {footer.links.map((l, i) => (
+                        {allLinks.map((l, i) => (
                             <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-xl font-black italic uppercase tracking-tighter text-white/20 hover:text-white no-underline transition-colors">
                                 {l.label}
                             </Link>
@@ -145,8 +162,8 @@ function StoreFooter({ theme, domain, baseUrl = "" }: { theme: ThemeConfig, doma
                     <span className="font-black text-xl tracking-tighter uppercase italic">{theme.branding.storeName}</span>
                     <p className="text-xs opacity-40 font-bold uppercase tracking-widest">{footer.text}</p>
                 </div>
-                <div className="flex gap-8">
-                    {footer.links.map((l, i) => (
+                <div className="flex gap-8 flex-wrap justify-center md:justify-end">
+                    {allLinks.map((l, i) => (
                         <Link key={i} href={`${baseUrl}${l.href.startsWith('/') ? '' : '/'}${l.href}`} className="text-xs font-black uppercase tracking-widest opacity-40 hover:opacity-100 no-underline transition-all" style={{ color: styles.textColor }}>
                             {l.label}
                         </Link>

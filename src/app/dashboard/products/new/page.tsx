@@ -359,12 +359,12 @@ function NewProductContent() {
           <Card className="bg-card/60 backdrop-blur-xl border-border/50 rounded-[2.5rem] overflow-hidden shadow-xl">
             <CardHeader className="bg-secondary/50 border-b border-border/50">
               <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-tighter">
-                Collections & Tags
+                Categories
               </CardTitle>
             </CardHeader>
             <CardContent className="pt-6 space-y-6">
               <div className="space-y-3">
-                <Label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Select Collections</Label>
+                <Label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Select Categories</Label>
                 <div className="flex flex-wrap gap-2">
                   {allCategories.map(cat => (
                     <button
@@ -382,18 +382,18 @@ function NewProductContent() {
                     </button>
                   ))}
                   {allCategories.length === 0 && (
-                    <p className="text-[10px] text-muted-foreground italic">No collections created yet.</p>
+                    <p className="text-[10px] text-muted-foreground italic">No categories created yet.</p>
                   )}
                 </div>
               </div>
 
               <div className="pt-4 border-t border-border/50">
-                <Label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-3 block">Quick Create Collection</Label>
+                <Label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-3 block">Quick Create Category</Label>
                 <div className="flex gap-2">
                   <Input 
                     value={newCatName} 
                     onChange={e => setNewCatName(e.target.value)} 
-                    placeholder="New collection name..." 
+                    placeholder="New category name..." 
                     className="h-10 bg-secondary/50 border-border text-xs rounded-xl" 
                   />
                   <Button 

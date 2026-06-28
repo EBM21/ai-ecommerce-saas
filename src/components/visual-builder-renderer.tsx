@@ -11,6 +11,8 @@ import {
 } from 'lucide-react'
 import { useSortable } from '@dnd-kit/sortable'
 import { CSS } from '@dnd-kit/utilities'
+import ProductClient from '@/app/[domain]/product/[id]/product-client'
+import CheckoutClient from '@/app/[domain]/checkout/checkout-client'
 
 // ─────────────────────────────────────────────────────────────────────────────
 // HELPERS
@@ -246,18 +248,60 @@ function RenderBlock({
                 type={block.type} 
                 props={block.props} 
                 products={products} 
+                domain={domain}
                 baseUrl={baseUrl} 
                 theme={theme} 
+                isEditMode={isEditMode}
             />
         </BlockWrapper>
     )
 }
 
-function InnerRenderer({ type, props: p, products, baseUrl, theme }: any) {
+function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEditMode }: any) {
     const currency = theme?.branding?.currency || 'USD'
     const format = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(v)
 
     switch (type) {
+        case 'system-product-details':
+            const sampleProduct = products && products.length > 0 ? products[0] : {
+                id: 'dummy',
+                title: 'Sample Product',
+                price: 99.99,
+                description: 'This is a sample product for preview purposes.',
+                variants: []
+            }
+            
+            // Reconstruct images for ProductClient (if it's array format, or object, or empty)
+            let imageArray: string[] = []
+            if (sampleProduct.images) {
+                try {
+                    const parsed = typeof sampleProduct.images === 'string' ? JSON.parse(sampleProduct.images) : sampleProduct.images
+                    if (Array.isArray(parsed)) {
+                        imageArray = parsed
+                    } else if (typeof parsed === 'object') {
+                        if (parsed.enhanced) imageArray.push(parsed.enhanced)
+                        if (parsed.raw) imageArray.push(parsed.raw)
+                        Object.values(parsed).forEach(v => {
+                            if (typeof v === 'string' && !imageArray.includes(v)) imageArray.push(v)
+                        })
+                    }
+                } catch(e) {}
+            }
+            if (imageArray.length === 0) imageArray.push('https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80')
+
+            return (
+                <div style={{ pointerEvents: isEditMode ? 'none' : 'auto' }}>
+                    <ProductClient product={sampleProduct} images={imageArray} domain={domain || "preview"} theme={theme} blockProps={p} />
+                </div>
+            )
+
+        case 'system-checkout':
+            return (
+                <div style={{ pointerEvents: isEditMode ? 'none' : 'auto' }}>
+                    <CheckoutClient storeId="preview" domain={domain || "preview"} baseUrl={baseUrl} theme={theme} blockProps={p} />
+                </div>
+            )
+
         case 'hero-modern':
             return (
                 <div className="max-w-7xl mx-auto px-6 text-center">

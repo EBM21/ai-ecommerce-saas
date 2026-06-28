@@ -1,6 +1,8 @@
 import { notFound } from 'next/navigation'
 import prisma from '@/lib/prisma'
 import ProductClient from './product-client'
+import { VisualBuilderRenderer } from '@/components/visual-builder-renderer'
+import { getBaseUrl } from '@/lib/get-base-url'
 
 export async function generateMetadata({ params }: { params: Promise<{ domain: string, id: string }> }) {
   const { domain, id } = await params
@@ -106,6 +108,50 @@ export default async function ProductDetailPage({
     } catch (e) {
       console.error("Product Page: theme parse error", e)
     }
+  }
+
+  // ── BUILDER MODE SUPPORT ──
+  const baseUrl = await getBaseUrl(domain)
+  if (theme?.mode === 'builder') {
+      const homeBlocks = theme.pageBlocks?.home ?? theme.blocks ?? []
+      let localBlocks = theme.pageBlocks?.product ?? []
+      
+      if (localBlocks.length === 0) {
+          localBlocks = [{
+              id: 'default-product',
+              type: 'system-product-details',
+              props: {},
+              animation: { entrance: 'none', hover: 'none' },
+              styles: { paddingTop: '0px', paddingBottom: '0px' }
+          }]
+      }
+
+      let finalBlocks = [...localBlocks]
+      if (!finalBlocks.some(b => b.type.startsWith('header-'))) {
+          const h = homeBlocks.find((b: any) => b.type.startsWith('header-'))
+          if (h) finalBlocks.unshift(h)
+      }
+      if (!finalBlocks.some(b => b.type.startsWith('footer-'))) {
+          const f = homeBlocks.find((b: any) => b.type.startsWith('footer-'))
+          if (f) finalBlocks.push(f)
+      }
+
+      return (
+          <div style={{
+              backgroundColor: theme?.styles?.bgColor || '#ffffff',
+              color: theme?.styles?.textColor || '#000000',
+              minHeight: '100vh',
+              fontFamily: theme?.styles?.bodyFont || 'var(--font-inter)'
+          }}>
+              <VisualBuilderRenderer 
+                  blocks={finalBlocks} 
+                  products={[formattedProduct]} 
+                  domain={domain} 
+                  baseUrl={baseUrl} 
+                  theme={theme}
+              />
+          </div>
+      )
   }
 
   // Naye Client Component ko call karein aur saara processed data pass kar dein

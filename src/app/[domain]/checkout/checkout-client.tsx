@@ -6,7 +6,7 @@ import Link from "next/link"
 import { ArrowLeft, Loader2, Lock, CheckCircle2 } from "lucide-react"
 import { placeOrder } from "./action"
 
-export default function CheckoutClient({ storeId, domain, theme, user, baseUrl }: { storeId: string, domain: string, theme: any, user?: any, baseUrl: string }) {
+export default function CheckoutClient({ storeId, domain, theme, user, baseUrl, blockProps }: { storeId: string, domain: string, theme: any, user?: any, baseUrl: string, blockProps?: any }) {
     const { items, cartTotal, clearCart } = useCart()
     const [loading, setLoading] = useState(false)
     const [success, setSuccess] = useState(false)
@@ -97,7 +97,7 @@ export default function CheckoutClient({ storeId, domain, theme, user, baseUrl }
                         {/* Checkout Form */}
                         <div>
                             <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl font-extrabold">Checkout</h2>
+                                <h2 className="text-2xl font-extrabold">{blockProps?.title || "Checkout"}</h2>
                                 {!user && (
                                     <Link href={`${baseUrl}/login`} className="text-xs font-bold uppercase tracking-widest opacity-50 hover:opacity-100 transition-opacity">
                                         Sign in for faster checkout
@@ -141,8 +141,12 @@ export default function CheckoutClient({ storeId, domain, theme, user, baseUrl }
                                     className="w-full py-4 rounded-xl font-bold text-lg flex items-center justify-center gap-2 mt-4 transition-opacity hover:opacity-90 disabled:opacity-50"
                                     style={{ backgroundColor: primaryColor, color: "#fff" }}
                                 >
-                                    {loading ? <Loader2 className="size-5 animate-spin" /> : <><Lock className="size-4" /> Place Order - {new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(cartTotal)}</>}
+                                    {loading ? <Loader2 className="size-5 animate-spin" /> : <><Lock className="size-4" /> {blockProps?.buttonText || "Place Order"} - {new Intl.NumberFormat('en-US', { style: 'currency', currency: theme?.branding?.currency || 'USD' }).format(cartTotal)}</>}
                                 </button>
+                                
+                                <p className="text-center text-xs opacity-50 mt-4 flex items-center justify-center gap-1">
+                                    <Lock className="size-3" /> {blockProps?.guaranteeText || "100% secure payment"}
+                                </p>
                             </form>
                         </div>
 

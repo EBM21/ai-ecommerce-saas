@@ -13,6 +13,7 @@ model User {
   id                 String    @id @default(uuid())
   email              String    @unique
   name               String?
+  avatarUrl          String?
   stripeCustomerId   String?
   createdAt          DateTime  @default(now())
   updatedAt          DateTime  @updatedAt
@@ -56,6 +57,8 @@ model Store {
   googleAdsAccountId  String?
   googleAdsRefreshToken String?
   // 👆 ───────────────────────────── 👆
+
+  policies          Json?
 
   createdAt         DateTime  @default(now())
   updatedAt         DateTime  @updatedAt

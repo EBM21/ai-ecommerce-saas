@@ -258,12 +258,12 @@ export default function EditProductClient({ product }: { product: any }) {
                     <Card className="bg-card/60 backdrop-blur-xl border-border/50 rounded-[2.5rem] overflow-hidden shadow-xl">
                         <CardHeader className="bg-secondary/50 border-b border-border/50 p-6">
                             <CardTitle className="text-sm font-bold text-foreground flex items-center gap-2 uppercase tracking-tighter">
-                                Collections & Tags
+                                Categories
                             </CardTitle>
                         </CardHeader>
                         <CardContent className="p-6 space-y-6">
                             <div className="space-y-3">
-                                <label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Select Collections</label>
+                                <label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest">Select Categories</label>
                                 <div className="flex flex-wrap gap-2">
                                     {allCategories.map(cat => (
                                         <button
@@ -284,7 +284,7 @@ export default function EditProductClient({ product }: { product: any }) {
                             </div>
 
                             <div className="pt-4 border-t border-border/50">
-                                <label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-3 block">Quick Create</label>
+                                <label className="text-muted-foreground text-[10px] font-bold uppercase tracking-widest mb-3 block">Quick Create Category</label>
                                 <div className="flex gap-2">
                                     <input 
                                         value={newCatName} 

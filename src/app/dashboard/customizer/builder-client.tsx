@@ -219,6 +219,35 @@ const BLOCK_CATEGORIES: BlockCategory[] = [
             },
         ]
     },
+    {
+        label: 'System',
+        icon: Settings,
+        blocks: [
+            {
+                type: 'system-product-details', label: 'Product Details', icon: ShoppingBag, color: 'from-blue-500/20 to-indigo-500/20',
+                defaultProps: {
+                    addToCartText: 'Add to Cart',
+                    buyNowText: 'Buy it now',
+                    shippingTitle: 'Global Shipping',
+                    shippingDesc: 'Free delivery on premium orders.',
+                    secureTitle: 'Secure Checkout',
+                    secureDesc: 'Encrypted and safe payments.'
+                },
+                defaultStyles: { paddingTop: '0px', paddingBottom: '0px' },
+                defaultAnimation: { entrance: 'fade-in', hover: 'none' }
+            },
+            {
+                type: 'system-checkout', label: 'Checkout', icon: Lock, color: 'from-green-500/20 to-emerald-500/20',
+                defaultProps: {
+                    title: 'Checkout',
+                    buttonText: 'Place Order',
+                    guaranteeText: '100% secure payment processing'
+                },
+                defaultStyles: { paddingTop: '0px', paddingBottom: '0px' },
+                defaultAnimation: { entrance: 'fade-in', hover: 'none' }
+            },
+        ]
+    },
 ]
 
 // Flat map for quick lookup
@@ -240,7 +269,7 @@ function createBlockFromTemplate(type: string): BuilderBlock {
 // ─────────────────────────────────────────────────────────────────────────────
 // SIDEBAR DRAGGABLE ELEMENT CARD
 // ─────────────────────────────────────────────────────────────────────────────
-function DraggableBlockCard({ template }: { template: BlockTemplate }) {
+function DraggableBlockCard({ template, onHover, onLeave }: { template: BlockTemplate, onHover?: () => void, onLeave?: () => void }) {
     const { attributes, listeners, setNodeRef, isDragging } = useDraggable({
         id: `template::${template.type}`,
         data: { kind: 'template', blockType: template.type }
@@ -251,6 +280,8 @@ function DraggableBlockCard({ template }: { template: BlockTemplate }) {
             ref={setNodeRef}
             {...listeners}
             {...attributes}
+            onMouseEnter={onHover}
+            onMouseLeave={onLeave}
             className={`group relative flex flex-col items-center gap-1.5 p-2.5 rounded-xl border transition-all cursor-grab active:cursor-grabbing select-none
                 ${isDragging ? 'opacity-30 scale-95' : 'border-border bg-card/30 hover:border-primary/50 hover:bg-primary/5 hover:shadow-md hover:shadow-primary/5'}
             `}
@@ -1347,13 +1378,14 @@ export default function VisualBuilder({
     const [activeBlockId, setActiveBlockId] = useState<string | null>(null)
     const [device, setDevice] = useState<Device>('desktop')
     const [isPreview, setIsPreview] = useState(false)
-    const [leftTab, setLeftTab] = useState<LeftTab>('elements')
+    const [leftTab, setLeftTab] = useState<LeftTab>('layers')
     const [rightTab, setRightTab] = useState<RightTab>('content')
     const [isSaving, startSave] = useTransition()
     const [activeDragId, setActiveDragId] = useState<string | null>(null)
     const [activeDragData, setActiveDragData] = useState<any>(null)
     const [overDropzone, setOverDropzone] = useState<string | null>(null)
     const [searchQuery, setSearchQuery] = useState('')
+    const [previewTemplate, setPreviewTemplate] = useState<BlockTemplate | null>(null)
     // Responsive panel visibility
     const [leftPanelOpen, setLeftPanelOpen] = useState(true)
     const [rightPanelOpen, setRightPanelOpen] = useState(true)
@@ -1637,6 +1669,8 @@ export default function VisualBuilder({
                                 className="bg-transparent text-[10px] sm:text-xs font-semibold border-none outline-none cursor-pointer min-w-0 w-full truncate"
                             >
                                 <option value="home">Home</option>
+                                <option value="product">Product Details</option>
+                                <option value="checkout">Checkout</option>
                                 {(config.customPages || []).map(p => (
                                     <option key={p.slug} value={p.slug}>{p.title}</option>
                                 ))}
@@ -1776,11 +1810,16 @@ export default function VisualBuilder({
                                                                     <CatIcon className="size-2.5 text-muted-foreground" />
                                                                     <span className="text-[8px] font-black uppercase tracking-[0.2em] text-muted-foreground">{cat.label}</span>
                                                                 </div>
-                                                                <div className="grid grid-cols-2 gap-1.5">
-                                                                    {cat.blocks.map(tpl => (
-                                                                        <DraggableBlockCard key={tpl.type} template={tpl} />
-                                                                    ))}
-                                                                </div>
+                                                                    <div className="grid grid-cols-2 gap-1.5">
+                                                                        {cat.blocks.map(tpl => (
+                                                                            <DraggableBlockCard 
+                                                                                key={tpl.type} 
+                                                                                template={tpl} 
+                                                                                onHover={() => setPreviewTemplate(tpl)}
+                                                                                onLeave={() => setPreviewTemplate(null)}
+                                                                            />
+                                                                        ))}
+                                                                    </div>
                                                             </div>
                                                         )
                                                     })}
@@ -1803,30 +1842,36 @@ export default function VisualBuilder({
 
                                         {/* Layers Tab */}
                                         {leftTab === 'layers' && (
-                                            <motion.div key="layers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-3">
-                                                <div className="flex items-center justify-between mb-3">
+                                            <motion.div key="layers" initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="p-3 flex flex-col h-full">
+                                                <div className="flex items-center justify-between mb-3 shrink-0">
                                                     <span className="text-[9px] font-black uppercase tracking-widest text-muted-foreground">
                                                         {currentPage === 'home' ? 'Home' : (config.customPages.find(p => p.slug === currentPage)?.title || currentPage)} — {currentBlocks.length}
                                                     </span>
+                                                    <button onClick={() => setLeftTab('elements')} className="flex items-center gap-1 bg-primary/10 hover:bg-primary/20 text-primary px-2 py-1 rounded-md transition-colors">
+                                                        <Plus className="size-3" />
+                                                        <span className="text-[9px] font-bold uppercase tracking-widest">Add Section</span>
+                                                    </button>
                                                 </div>
-                                                {currentBlocks.length === 0 ? (
-                                                    <div className="text-center py-10 opacity-30">
-                                                        <Layers className="size-6 mx-auto mb-2" />
-                                                        <p className="text-xs font-bold">No sections</p>
-                                                    </div>
-                                                ) : (
-                                                    <SortableContext items={currentBlocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
-                                                        {currentBlocks.map(block => (
-                                                            <LayerItem
-                                                                key={block.id}
-                                                                block={block}
-                                                                isActive={activeBlockId === block.id}
-                                                                onSelect={() => { setActiveBlockId(block.id); setLeftTab('elements') }}
-                                                                onDelete={() => deleteBlock(block.id)}
-                                                            />
-                                                        ))}
-                                                    </SortableContext>
-                                                )}
+                                                <div className="flex-1 overflow-y-auto" style={{ scrollbarWidth: 'thin' }}>
+                                                    {currentBlocks.length === 0 ? (
+                                                        <div className="text-center py-10 opacity-30">
+                                                            <Layers className="size-6 mx-auto mb-2" />
+                                                            <p className="text-xs font-bold">No sections</p>
+                                                        </div>
+                                                    ) : (
+                                                        <SortableContext items={currentBlocks.map(b => b.id)} strategy={verticalListSortingStrategy}>
+                                                            {currentBlocks.map(block => (
+                                                                <LayerItem
+                                                                    key={block.id}
+                                                                    block={block}
+                                                                    isActive={activeBlockId === block.id}
+                                                                    onSelect={() => { setActiveBlockId(block.id); setRightPanelOpen(true) }}
+                                                                    onDelete={() => deleteBlock(block.id)}
+                                                                />
+                                                            ))}
+                                                        </SortableContext>
+                                                    )}
+                                                </div>
                                             </motion.div>
                                         )}
                                     </AnimatePresence>
@@ -1841,6 +1886,29 @@ export default function VisualBuilder({
                             isPreview ? 'bg-background' : 'bg-secondary/40'
                         }`}
                     >
+                        {/* ── PREVIEW OVERLAY ── */}
+                        <AnimatePresence>
+                            {previewTemplate && !activeDragId && (
+                                <motion.div
+                                    initial={{ opacity: 0, scale: 0.95, x: -10 }}
+                                    animate={{ opacity: 1, scale: 1, x: 0 }}
+                                    exit={{ opacity: 0, scale: 0.95, x: -10 }}
+                                    transition={{ duration: 0.2 }}
+                                    className="absolute left-6 top-6 z-50 pointer-events-none rounded-xl overflow-hidden shadow-2xl border border-border bg-background"
+                                    style={{ width: 800, height: 450, transformOrigin: 'top left', transform: 'scale(0.4)' }}
+                                >
+                                    <div className="w-full h-full overflow-hidden relative">
+                                        <div className="absolute inset-0 bg-background/50 backdrop-blur-3xl z-[-1]" />
+                                        <VisualBuilderRenderer 
+                                            blocks={[createBlockFromTemplate(previewTemplate.type)]} 
+                                            theme={config} 
+                                            products={products} 
+                                        />
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
                         <div
                             className="absolute inset-0 overflow-y-auto"
                             style={{ scrollbarWidth: 'thin' }}

@@ -65,3 +65,24 @@ export async function createCategory(name: string) {
         return { success: false, error: e.message }
     }
 }
+
+export async function deleteCategory(id: string) {
+    try {
+        const supabase = await createClient()
+        const { data: { user } } = await supabase.auth.getUser()
+        if (!user) return { success: false, error: 'Unauthorized' }
+
+        const store = await prisma.store.findFirst({
+            where: { ownerId: user.id }
+        })
+        if (!store) return { success: false, error: 'Store not found' }
+
+        await prisma.category.delete({
+            where: { id, storeId: store.id }
+        })
+
+        return { success: true }
+    } catch (e: any) {
+        return { success: false, error: e.message }
+    }
+}

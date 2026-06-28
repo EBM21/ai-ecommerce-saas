@@ -3,6 +3,7 @@ import { createClient } from "@/utils/supabase/server"
 import prisma from "@/lib/prisma"
 import VisualBuilder from "./builder-client"
 import { ThemeConfig, deepMerge } from "@/types/theme-types"
+import { CartProvider } from "@/lib/cart-context"
 
 export default async function CustomizerPage() {
     const supabase = await createClient()
@@ -80,11 +81,13 @@ export default async function CustomizerPage() {
     }))
 
     return (
-        <VisualBuilder 
-            initialConfig={config} 
-            products={serializedProducts} 
-            storeId={store.id}
-            storeDomain={store.subdomain}
-        />
+        <CartProvider>
+            <VisualBuilder 
+                initialConfig={config} 
+                products={serializedProducts} 
+                storeId={store.id}
+                storeDomain={store.subdomain}
+            />
+        </CartProvider>
     )
 }

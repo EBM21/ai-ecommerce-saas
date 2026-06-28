@@ -25,7 +25,16 @@ export default async function DashboardLayout({ children }: { children: React.Re
         }
 
         // 3. User is a merchant, show the shell
-        return <DashboardShell>{children}</DashboardShell>
+        const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+
+        // 4. Notifications (Low Stock)
+        const lowStockProducts = await prisma.product.findMany({
+            where: { storeId: store.id, inventoryCount: { lt: 10 } },
+            select: { id: true, title: true, inventoryCount: true },
+            orderBy: { inventoryCount: 'asc' }
+        })
+
+        return <DashboardShell user={dbUser || undefined} lowStockProducts={lowStockProducts}>{children}</DashboardShell>
         
     } catch (error: any) {
         // ── IMPORTANT: Bubble up Next.js control flow errors ──

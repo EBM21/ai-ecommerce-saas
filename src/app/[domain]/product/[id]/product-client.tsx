@@ -10,12 +10,14 @@ export default function ProductClient({
   product, 
   images, 
   domain,
-  theme
+  theme,
+  blockProps
 }: { 
   product: any, 
   images: string[], 
   domain: string,
-  theme: any
+  theme: any,
+  blockProps?: any
 }) {
   const router = useRouter()
   const { addToCart, setIsCartOpen } = useCart()
@@ -111,10 +113,10 @@ export default function ProductClient({
                </div>
                <div className="space-y-3 pt-8">
                  <button onClick={handleAddToCart} disabled={isAdding || added} className="w-full h-16 bg-foreground text-background text-[10px] font-bold uppercase tracking-[0.3em] hover:opacity-90 transition-all flex items-center justify-center">
-                    {isAdding ? "Adding..." : added ? "Added" : "Add to Bag"}
+                    {isAdding ? "Adding..." : added ? "Added" : (blockProps?.addToCartText || "Add to Bag")}
                  </button>
                  <button onClick={handleBuyNow} className="w-full h-16 border border-foreground text-foreground text-[10px] font-bold uppercase tracking-[0.3em] hover:bg-foreground/5 transition-all">
-                    Checkout Now
+                    {blockProps?.buyNowText || "Checkout Now"}
                  </button>
                </div>
             </div>
@@ -168,11 +170,11 @@ export default function ProductClient({
                  {product.description}
               </div>
               <div className="flex flex-col gap-4">
-                 <button onClick={handleAddToCart} disabled={isAdding || added} className="h-20 bg-red-600 hover:bg-red-700 text-white font-black uppercase italic text-xl tracking-tighter transition-all flex items-center justify-center gap-4 active:scale-95">
-                    {isAdding ? "Analyzing..." : added ? "Success" : "Forge Order"} <ShoppingCart className="size-6" />
+                 <button onClick={handleAddToCart} disabled={isAdding || added || product.inventoryCount === 0} className={`h-20 font-black uppercase italic text-xl tracking-tighter transition-all flex items-center justify-center gap-4 ${product.inventoryCount === 0 ? "bg-zinc-800 text-zinc-500 cursor-not-allowed" : "bg-red-600 hover:bg-red-700 text-white active:scale-95"}`}>
+                    {product.inventoryCount === 0 ? "Out of Stock" : isAdding ? "Analyzing..." : added ? "Success" : (blockProps?.addToCartText || "Forge Order")} {product.inventoryCount > 0 && <ShoppingCart className="size-6" />}
                  </button>
-                 <button onClick={handleBuyNow} className="h-20 border-4 border-foreground hover:bg-foreground hover:text-background text-foreground font-black uppercase italic text-xl tracking-tighter transition-all active:scale-95 flex items-center justify-center gap-4">
-                    Instant Acquisition <ArrowRight className="size-6" />
+                 <button onClick={handleBuyNow} disabled={product.inventoryCount === 0} className={`h-20 border-4 font-black uppercase italic text-xl tracking-tighter transition-all flex items-center justify-center gap-4 ${product.inventoryCount === 0 ? "border-zinc-800 text-zinc-600 cursor-not-allowed" : "border-foreground hover:bg-foreground hover:text-background text-foreground active:scale-95"}`}>
+                    {product.inventoryCount === 0 ? "Unavailable" : (blockProps?.buyNowText || "Instant Acquisition")} {product.inventoryCount > 0 && <ArrowRight className="size-6" />}
                  </button>
               </div>
               <div className="grid grid-cols-2 gap-px bg-foreground/10 border border-border">
@@ -285,29 +287,38 @@ export default function ProductClient({
             <div className="flex flex-col gap-4 mb-12">
               <button 
                 onClick={handleAddToCart}
-                disabled={isAdding || added}
+                disabled={isAdding || added || product.inventoryCount === 0}
                 className={`relative group w-full h-16 rounded-2xl font-extrabold text-lg flex items-center justify-center gap-3 overflow-hidden transition-all shadow-xl ${
-                  added 
+                  product.inventoryCount === 0
+                  ? "bg-secondary text-muted-foreground/50 cursor-not-allowed border border-border"
+                  : added 
                   ? "bg-emerald-500 text-white" 
                   : "bg-primary text-primary-foreground active:scale-95 hover:bg-primary/90"
                 }`}
               >
                 <span className="relative z-10 flex items-center gap-3">
-                  {isAdding ? (
+                  {product.inventoryCount === 0 ? (
+                    "Out of Stock"
+                  ) : isAdding ? (
                     <span className="animate-spin border-2 border-current border-t-transparent rounded-full size-5" />
                   ) : added ? (
                     <><CheckCircle2 className="size-5" /> Added to Cart</>
                   ) : (
-                    <><ShoppingCart className="size-5" /> Add to Cart</>
+                    <><ShoppingCart className="size-5" /> {blockProps?.addToCartText || "Add to Cart"}</>
                   )}
                 </span>
               </button>
 
               <button 
                 onClick={handleBuyNow}
-                className="w-full h-16 rounded-2xl bg-secondary/50 border border-border text-foreground font-bold text-lg hover:bg-secondary hover:border-border/80 transition-all active:scale-95"
+                disabled={product.inventoryCount === 0}
+                className={`w-full h-16 rounded-2xl border font-bold text-lg transition-all ${
+                  product.inventoryCount === 0 
+                  ? "bg-transparent border-border/50 text-muted-foreground/30 cursor-not-allowed" 
+                  : "bg-secondary/50 border-border text-foreground hover:bg-secondary hover:border-border/80 active:scale-95"
+                }`}
               >
-                Buy it now
+                {blockProps?.buyNowText || "Buy it now"}
               </button>
             </div>
 
@@ -317,8 +328,8 @@ export default function ProductClient({
                   <Truck className="size-5 text-foreground/80" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-foreground mb-1">Global Shipping</h4>
-                  <p className="text-xs text-muted-foreground">Free delivery on premium orders.</p>
+                  <h4 className="text-sm font-bold text-foreground mb-1">{blockProps?.shippingTitle || "Global Shipping"}</h4>
+                  <p className="text-xs text-muted-foreground">{blockProps?.shippingDesc || "Free delivery on premium orders."}</p>
                 </div>
               </div>
               <div className="flex items-start gap-4">
@@ -326,8 +337,8 @@ export default function ProductClient({
                   <ShieldCheck className="size-5 text-foreground/80" />
                 </div>
                 <div>
-                  <h4 className="text-sm font-bold text-foreground mb-1">Secure Checkout</h4>
-                  <p className="text-xs text-muted-foreground">Encrypted and safe payments.</p>
+                  <h4 className="text-sm font-bold text-foreground mb-1">{blockProps?.secureTitle || "Secure Checkout"}</h4>
+                  <p className="text-xs text-muted-foreground">{blockProps?.secureDesc || "Encrypted and safe payments."}</p>
                 </div>
               </div>
             </div>

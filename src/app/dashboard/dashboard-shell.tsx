@@ -12,9 +12,10 @@ import { getStoreUrl } from "@/lib/utils"
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
-  Bell, Search, LogOut, Zap, Command, X, Palette,
+  Bell, Search, LogOut, Zap, Command, X, Palette, Layers, Play,
   User, CreditCard, HelpCircle, ChevronUp, AlertCircle, Menu, Megaphone
 } from "lucide-react"
+import { UserProfileHeader } from "@/components/user-profile-header"
 
 type NavItem = {
   label: string;
@@ -34,6 +35,7 @@ const NAV_GROUPS: NavGroup[] = [
     items: [
       { label: "Overview", href: "/dashboard", icon: LayoutDashboard },
       { label: "Products", href: "/dashboard/products", icon: Package },
+      { label: "Categories", href: "/dashboard/categories", icon: Layers },
       { label: "Orders", href: "/dashboard/orders", icon: ShoppingBag },
       { label: "Analytics", href: "/dashboard/analytics", icon: BarChart2 },
     ],
@@ -48,20 +50,21 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Store",
     items: [
-      { label: "Appearance", href: "/dashboard/customizer", icon: Palette },
-      { label: "Storefront", href: "/store", icon: Home },
+      { label: "Build Store", href: "/dashboard/customizer", icon: Palette },
+      { label: "Preview", href: "/store", icon: Play },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
     ],
   },
 ]
 
-export default function DashboardShell({ children }: { children: React.ReactNode }) {
+export default function DashboardShell({ children, user, lowStockProducts = [] }: { children: React.ReactNode, user?: any, lowStockProducts?: any[] }) {
   const [collapsed, setCollapsed] = useState(false)
   const [mobileOpen, setMobileOpen] = useState(false)
   const [loggingOut, setLoggingOut] = useState(false)
   const [searchOpen, setSearchOpen] = useState(false)
   const [searchVal, setSearchVal] = useState("")
   const [userMenu, setUserMenu] = useState(false)
+  const [notifMenu, setNotifMenu] = useState(false)
   const [time, setTime] = useState("")
   const [isMobile, setIsMobile] = useState(false)
   
@@ -132,10 +135,12 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     return () => window.removeEventListener("keydown", fn)
   }, [])
 
-  // Click outside menu
+  // Click outside to close user menu or notif menu
+  const notifRef = useRef<HTMLDivElement>(null)
   useEffect(() => {
     const fn = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) setUserMenu(false)
+      if (notifRef.current && !notifRef.current.contains(e.target as Node)) setNotifMenu(false)
     }
     document.addEventListener("mousedown", fn)
     return () => document.removeEventListener("mousedown", fn)
@@ -153,7 +158,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
     .find(i => pathname === i.href || pathname.startsWith(i.href + "/"))
     ?.label ?? "Dashboard"
 
-  const sideW = isMobile ? 0 : (collapsed ? 64 : 240)
+  const sideW = isCustomizer ? 0 : (isMobile ? 0 : (collapsed ? 64 : 240))
   const mobileSideW = 260 // mobile drawer width
   const isBillingPage = pathname === "/dashboard/settings"
   const showBanner = timeLeft !== null && (timeLeft.days > 0 || timeLeft.hours > 0) && !isSubscribed
@@ -220,6 +225,7 @@ export default function DashboardShell({ children }: { children: React.ReactNode
       )}
 
       {/* ── SIDEBAR ── */}
+      {!isCustomizer && (
       <aside style={{
         position: "fixed", top: 0, left: 0, bottom: 0,
         width: isMobile ? mobileSideW : sideW,
@@ -239,15 +245,19 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
         <div style={{
           height: 60, display: "flex", alignItems: "center",
-          padding: "0 18px",
+          padding: collapsed ? "0" : "0 16px",
+          justifyContent: collapsed ? "center" : "flex-start",
           borderBottom: "1px solid var(--border)",
-          flexShrink: 0, gap: 12, overflow: "hidden",
+          flexShrink: 0, gap: 10, overflow: "hidden",
         }}>
-          <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
-            <Sparkles className="size-4 text-foreground" strokeWidth={2} />
-          </div>
           {!collapsed && (
-            <div style={{ overflow: "hidden" }}>
+            <div className="size-8 rounded-xl bg-gradient-to-br from-indigo-500 to-violet-600 flex items-center justify-center shadow-lg shadow-indigo-500/30 flex-shrink-0">
+              <Sparkles className="size-4 text-foreground" strokeWidth={2} />
+            </div>
+          )}
+          
+          {!collapsed && (
+            <div style={{ overflow: "hidden", flex: 1 }}>
               <div className="text-[15px] font-bold text-foreground tracking-tight leading-[1.15] whitespace-nowrap">
                 Quadlix
               </div>
@@ -256,6 +266,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
               </div>
             </div>
           )}
+
+          <button
+            onClick={() => setCollapsed(!collapsed)}
+            className={`flex items-center justify-center rounded-lg border border-border bg-secondary/40 hover:bg-secondary hover:text-foreground transition-all text-muted-foreground ${collapsed ? "size-10 shadow-sm" : "size-7 flex-shrink-0"}`}
+            title={collapsed ? "Expand Sidebar" : "Collapse Sidebar"}
+          >
+            {collapsed ? <Menu className="size-5" /> : <ChevronLeft className="size-4" />}
+          </button>
         </div>
 
         <nav style={{ flex: 1, overflowY: "auto", overflowX: "hidden", padding: "16px 10px 8px" }}>
@@ -281,29 +299,28 @@ export default function DashboardShell({ children }: { children: React.ReactNode
                   <LinkComponent
                     key={href} href={targetHref} {...(!isStoreLink ? { prefetch: true } : { target: "_blank", rel: "noopener noreferrer" })}
                     onClick={() => isMobile && setMobileOpen(false)}
-                    className={`nav-link ${active ? "active" : ""}`}
+                    className={`nav-link ${active ? "active text-indigo-600 dark:text-indigo-400 bg-indigo-500/10" : "text-foreground/80 hover:text-foreground hover:bg-secondary/60"}`}
                     style={{
-                      padding: (!isMobile && collapsed) ? "9px 0" : "8px 10px",
+                      padding: (!isMobile && collapsed) ? "9px 0" : "10px 12px",
                       justifyContent: (!isMobile && collapsed) ? "center" : "flex-start",
-                      color: active ? "var(--foreground)" : "var(--muted-foreground)",
-                      gap: 10, marginBottom: 2,
+                      gap: 12, marginBottom: 4,
                     }}
                   >
                     {active && (
                       <span style={{
                         position: "absolute", left: 0,
                         top: "50%", transform: "translateY(-50%)",
-                        width: 3, height: "55%",
-                        background: "linear-gradient(180deg, #c4b5fd 0%, #7c3aed 100%)",
-                        borderRadius: "0 3px 3px 0",
-                        boxShadow: "2px 0 12px rgba(139,92,246,0.7)",
+                        width: 4, height: "60%",
+                        background: "linear-gradient(180deg, #818cf8 0%, #4f46e5 100%)",
+                        borderRadius: "0 4px 4px 0",
+                        boxShadow: "2px 0 12px rgba(79,70,229,0.5)",
                       }} />
                     )}
 
-                    <Icon className={`size-4 ${active ? "text-indigo-500 dark:text-indigo-400" : "text-muted-foreground/60"}`} strokeWidth={active ? 2.5 : 1.75} />
+                    <Icon className={`size-4.5 ${active ? "text-indigo-600 dark:text-indigo-400" : "text-foreground/70"}`} strokeWidth={active ? 2.5 : 2.2} />
 
                     {!collapsed && (
-                      <span className={`text-[13.5px] ${active ? "font-semibold" : "font-normal"} flex-1 truncate tracking-tight`}>
+                      <span className={`text-[14px] ${active ? "font-bold" : "font-medium"} flex-1 truncate tracking-tight`}>
                         {label}
                       </span>
                     )}
@@ -340,35 +357,6 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             <div className="text-[10px] text-muted-foreground/40 font-mono">
               GPT-4o · DALL·E 3 · Claude
             </div>
-          </div>
-        )}
-
-        {/* ── PLAN STATUS CARD ── */}
-        {!collapsed && timeLeft !== null && (
-          <div className={`mx-2.5 mb-2.5 p-3 rounded-xl border ${isSubscribed ? "bg-emerald-500/5 border-emerald-500/15" : "bg-amber-500/5 border-amber-500/15"}`}>
-            <div className="flex items-center justify-between mb-1.5">
-              <span className="text-[10px] font-bold text-foreground uppercase tracking-widest">
-                {isSubscribed ? "Pro Plan" : "Free Trial"}
-              </span>
-              {!isSubscribed && (
-                 <Link href="/dashboard/settings?tab=billing" className="text-[10px] font-bold text-amber-500 hover:text-amber-400">Upgrade</Link>
-              )}
-            </div>
-
-            {isSubscribed ? (
-              <div className="text-[10px] text-muted-foreground font-medium">
-                Your subscription is active.
-              </div>
-            ) : (
-              <>
-                <div className="text-[10px] text-muted-foreground mb-2">
-                  Expires in <span className="text-amber-500 font-bold">{timeLeft.days}d {timeLeft.hours}h</span>
-                </div>
-                <div className="w-full h-1 bg-secondary rounded-full overflow-hidden">
-                  <div className="h-full bg-amber-500" style={{ width: `${Math.max(0, Math.min(100, (timeLeft.days / 14) * 100))}%` }} />
-                </div>
-              </>
-            )}
           </div>
         )}
 
@@ -428,7 +416,14 @@ export default function DashboardShell({ children }: { children: React.ReactNode
             {!collapsed && (
               <>
                 <div className="flex-1 text-left min-w-0">
-                  <div className="text-[13px] font-bold text-foreground truncate">Admin</div>
+                  <div className="flex items-center gap-2">
+                    <div className="text-[13px] font-bold text-foreground truncate">Admin</div>
+                    {isSubscribed && (
+                        <span className="px-1.5 py-0.5 rounded-md bg-indigo-500/10 text-indigo-500 text-[9px] font-bold uppercase tracking-wider">
+                            Pro
+                        </span>
+                    )}
+                  </div>
                   <div className="text-[11px] text-muted-foreground truncate">Store Owner</div>
                 </div>
                 <ChevronUp className={`size-3.5 text-muted-foreground/40 transition-transform duration-200 ${userMenu ? "" : "rotate-180"}`} />
@@ -438,70 +433,112 @@ export default function DashboardShell({ children }: { children: React.ReactNode
 
           <button
             onClick={() => setCollapsed(!collapsed)}
-            className="w-full flex items-center justify-center gap-2 py-2 mt-1 rounded-lg text-muted-foreground/30 hover:text-muted-foreground hover:bg-secondary/50 transition-all text-[11.5px] font-medium"
+            className="w-full flex items-center justify-center gap-2 py-2 mt-2 rounded-lg text-muted-foreground bg-secondary/30 border border-border hover:text-foreground hover:bg-secondary transition-all text-xs font-bold"
           >
-            {collapsed ? <ChevronRight className="size-3.5" /> : <><ChevronLeft className="size-3.5" /><span>Collapse</span></>}
+            {collapsed ? <ChevronRight className="size-4" /> : <><ChevronLeft className="size-4" /><span>Collapse Sidebar</span></>}
           </button>
         </div>
       </aside>
+      )}
 
-      {/* ── TOPBAR ── */}
+      {/* ── MAIN LAYOUT ── */}
       {isCustomizer ? null : (
         <header
-        className="fixed top-0 right-0 z-40 h-[60px] bg-background/90 backdrop-blur-xl border-b border-border flex items-center px-4 md:px-6 gap-3 md:gap-4 transition-all duration-300"
+        className="fixed top-0 right-0 z-40 h-[60px] bg-black text-white dark:bg-white dark:text-black border-b border-black/10 dark:border-white/10 flex items-center px-4 md:px-6 gap-3 md:gap-4 transition-all duration-300 shadow-sm"
         style={{ left: isMobile ? 0 : sideW }}
       >
         {/* Hamburger — mobile only */}
         {isMobile && (
           <button
             onClick={() => setMobileOpen(p => !p)}
-            className="flex md:hidden size-9 rounded-lg border border-border items-center justify-center text-muted-foreground hover:text-foreground hover:bg-secondary transition-all shrink-0"
+            className="flex md:hidden size-9 rounded-lg border border-white/20 dark:border-black/20 items-center justify-center text-white/80 dark:text-black/80 hover:text-white dark:hover:text-black hover:bg-white/10 dark:hover:bg-black/10 transition-all shrink-0"
           >
             {mobileOpen ? <X className="size-4" /> : <Menu className="size-4" />}
           </button>
         )}
 
         <div className="flex items-center gap-1.5 text-[13px] min-w-0">
-          <span className="hidden sm:block text-muted-foreground/50 font-medium">Quadlix</span>
-          <ChevronRight className="hidden sm:block size-3 text-muted-foreground/20" />
-          <span className="text-foreground font-bold tracking-tight truncate">{currentPage}</span>
+          <span className="hidden sm:block text-white/60 dark:text-black/60 font-medium">Quadlix</span>
+          <ChevronRight className="hidden sm:block size-3 text-white/40 dark:text-black/40" />
+          <span className="font-bold tracking-tight truncate">{currentPage}</span>
         </div>
 
         <button
           onClick={() => setSearchOpen(true)}
-          className="flex-1 max-w-[320px] h-9 bg-secondary/50 border border-border rounded-xl px-3 flex items-center gap-2.5 hover:bg-secondary hover:border-border/80 transition-all group"
+          className="flex-1 max-w-[320px] h-9 bg-white/10 dark:bg-black/5 border border-white/20 dark:border-black/20 rounded-xl px-3 flex items-center gap-2.5 hover:bg-white/20 dark:hover:bg-black/10 transition-all group"
         >
-          <Search className="size-3.5 text-muted-foreground/40 group-hover:text-muted-foreground/60 shrink-0" />
-          <span className="text-[13px] text-muted-foreground/40 flex-1 text-left truncate hidden sm:block">Search everything...</span>
-          <span className="text-[13px] text-muted-foreground/40 flex-1 text-left truncate sm:hidden">Search...</span>
-          <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-background border border-border shadow-sm shrink-0">
-            <Command className="size-2.5 text-muted-foreground/50" />
-            <span className="text-[9px] text-muted-foreground/50 font-bold font-mono">K</span>
+          <Search className="size-3.5 text-white/60 dark:text-black/60 group-hover:text-white/80 dark:group-hover:text-black/80 shrink-0" />
+          <span className="text-[13px] text-white/60 dark:text-black/60 flex-1 text-left truncate hidden sm:block">Search everything...</span>
+          <span className="text-[13px] text-white/60 dark:text-black/60 flex-1 text-left truncate sm:hidden">Search...</span>
+          <div className="hidden sm:flex items-center gap-1 px-1.5 py-0.5 rounded-md bg-white/20 dark:bg-black/10 border border-white/10 dark:border-black/10 shadow-sm shrink-0">
+            <Command className="size-2.5 text-white/70 dark:text-black/70" />
+            <span className="text-[9px] text-white/70 dark:text-black/70 font-bold font-mono">K</span>
           </div>
         </button>
 
         <div className="ml-auto flex items-center gap-2 md:gap-4">
-          <div className="hidden sm:block px-3 py-1.5 rounded-lg bg-secondary/50 border border-border font-mono text-[12px] text-muted-foreground/60">
+          <div className="hidden sm:block px-3 py-1.5 rounded-lg bg-white/10 dark:bg-black/5 border border-white/20 dark:border-black/20 font-mono text-[12px] text-white/80 dark:text-black/80">
             {time}
           </div>
 
           <Link
             href="/dashboard/ai-studio"
-            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-indigo-500/10 border border-indigo-500/20 hover:bg-indigo-500/15 transition-all text-indigo-600 dark:text-indigo-400 no-underline shrink-0"
+            className="flex items-center gap-2 px-2 sm:px-3 py-1.5 rounded-lg bg-indigo-500/20 border border-indigo-500/30 hover:bg-indigo-500/30 transition-all text-indigo-300 dark:text-indigo-600 no-underline shrink-0"
           >
             <Zap className="size-3.5 fill-current" />
             <span className="hidden sm:inline text-[12px] font-bold tracking-tight">AI Studio</span>
           </Link>
 
-          <button 
-            onClick={() => toast.info("No new notifications", { description: "You are all caught up!" })}
-            className="size-9 rounded-lg bg-secondary/50 border border-border flex items-center justify-center text-muted-foreground/60 hover:text-foreground hover:bg-secondary transition-all relative"
-          >
-            <Bell className="size-4" />
-            <span className="absolute top-2.5 right-2.5 size-1.5 rounded-full bg-indigo-500 border-2 border-background" />
-          </button>
+          <div ref={notifRef} className="relative">
+            <button 
+              onClick={() => setNotifMenu(p => !p)}
+              className="size-9 rounded-lg bg-white/10 dark:bg-black/5 border border-white/20 dark:border-black/20 flex items-center justify-center text-white/80 dark:text-black/80 hover:text-white dark:hover:text-black hover:bg-white/20 dark:hover:bg-black/10 transition-all"
+            >
+              <Bell className="size-4" />
+              {lowStockProducts.length > 0 && (
+                <span className="absolute top-2 right-2 size-2 rounded-full bg-rose-500 animate-pulse border-2 border-black dark:border-white" />
+              )}
+            </button>
+            {notifMenu && (
+              <div className="absolute top-full right-0 mt-2 w-80 bg-card border border-border shadow-2xl rounded-2xl overflow-hidden z-50">
+                <div className="px-4 py-3 border-b border-border bg-secondary/50 flex items-center justify-between">
+                   <h3 className="text-sm font-bold text-foreground">Notifications</h3>
+                   <span className="text-[10px] bg-indigo-500/10 text-indigo-500 px-2 py-0.5 rounded-full font-bold">{lowStockProducts.length} New</span>
+                </div>
+                <div className="max-h-[300px] overflow-y-auto">
+                   {lowStockProducts.length > 0 ? (
+                      lowStockProducts.map(p => (
+                         <div key={p.id} className="p-4 border-b border-border/50 hover:bg-secondary/50 transition-colors">
+                            <div className="flex gap-3 items-start">
+                               <div className="size-8 rounded-lg bg-rose-500/10 flex items-center justify-center shrink-0 border border-rose-500/20">
+                                  <AlertCircle className="size-4 text-rose-500" />
+                               </div>
+                               <div>
+                                  <p className="text-sm font-bold text-foreground leading-tight">{p.title}</p>
+                                  <p className="text-xs text-muted-foreground mt-1">
+                                     Stock is critically low: <span className="font-bold text-rose-500">{p.inventoryCount} remaining</span>.
+                                  </p>
+                                  <Link href={`/dashboard/products/${p.id}/edit`} className="text-[10px] font-bold text-indigo-500 hover:text-indigo-400 uppercase tracking-widest mt-2 block" onClick={() => setNotifMenu(false)}>Update Stock</Link>
+                               </div>
+                            </div>
+                         </div>
+                      ))
+                   ) : (
+                      <div className="p-8 text-center text-muted-foreground text-sm flex flex-col items-center">
+                         <Bell className="size-8 opacity-20 mb-3" />
+                         No new notifications
+                      </div>
+                   )}
+                </div>
+              </div>
+            )}
+          </div>
 
-          <ThemeToggle />
+          <UserProfileHeader user={user} />
+          
+          <div className="border-l border-white/20 dark:border-black/20 pl-2 md:pl-4">
+            <ThemeToggle />
+          </div>
         </div>
       </header>
       )}
