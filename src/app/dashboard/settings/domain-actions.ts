@@ -11,6 +11,9 @@ import dns from 'dns/promises'
 const SERVER_IP = process.env.NEXT_PUBLIC_SERVER_IP || '76.76.21.21' // Example (Vercel)
 const CNAME_TARGET = process.env.NEXT_PUBLIC_CNAME_TARGET || 'cname.quadlix.com'
 
+const VERCEL_TOKEN = process.env.VERCEL_API_TOKEN
+const VERCEL_PROJECT_ID = process.env.VERCEL_PROJECT_ID
+
 // ── SCHEMAS ─────────────────────────────────────────────────────────────────
 const domainSchema = z.string().min(3).regex(/^[a-z0-9]+([\-\.]{1}[a-z0-9]+)*\.[a-z]{2,5}$/i, 'Invalid domain format')
 
@@ -113,6 +116,29 @@ export async function setupExistingDomain(domain: string) {
             }
         })
 
+        // VERCEL API INTEGRATION
+        if (VERCEL_TOKEN && VERCEL_PROJECT_ID) {
+            try {
+                const vercelRes = await fetch(`https://api.vercel.com/v10/projects/${VERCEL_PROJECT_ID}/domains`, {
+                    method: 'POST',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`,
+                        'Content-Type': 'application/json'
+                    },
+                    body: JSON.stringify({ name: validated })
+                })
+                
+                if (!vercelRes.ok) {
+                    const vercelErr = await vercelRes.json()
+                    console.error("Vercel Domain Add Error:", vercelErr)
+                    // If the domain is already added by another project, Vercel will return an error
+                    // We might want to alert the user, but for now we log it.
+                }
+            } catch (vErr) {
+                console.error("Failed to connect to Vercel API:", vErr)
+            }
+        }
+
         revalidatePath('/dashboard/settings')
         return { success: true }
     } catch (e: any) {
@@ -177,6 +203,8 @@ export async function removeCustomDomain() {
         const store = await prisma.store.findFirst({ where: { ownerId: user.id } })
         if (!store) return { success: false, error: 'Store not found' }
 
+        const oldDomain = store.customDomain
+
         await prisma.store.update({
             where: { id: store.id },
             data: {
@@ -188,6 +216,25 @@ export async function removeCustomDomain() {
                 domainExpiresAt: null
             }
         })
+
+        // VERCEL API INTEGRATION
+        if (oldDomain && VERCEL_TOKEN && VERCEL_PROJECT_ID) {
+            try {
+                const vercelRes = await fetch(`https://api.vercel.com/v9/projects/${VERCEL_PROJECT_ID}/domains/${oldDomain}`, {
+                    method: 'DELETE',
+                    headers: {
+                        'Authorization': `Bearer ${VERCEL_TOKEN}`
+                    }
+                })
+                
+                if (!vercelRes.ok) {
+                    const vercelErr = await vercelRes.json()
+                    console.error("Vercel Domain Remove Error:", vercelErr)
+                }
+            } catch (vErr) {
+                console.error("Failed to connect to Vercel API for removal:", vErr)
+            }
+        }
 
         revalidatePath('/dashboard/settings')
         return { success: true }
