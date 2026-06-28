@@ -71,10 +71,16 @@ export default async function ProductDetailPage({
     try {
       const parsed = typeof product.images === 'string' ? JSON.parse(product.images) : product.images
       
-      // Agar database mein images pehle se Array hain (e.g. ["url1", "url2"])
+      // Agar database mein images pehle se Array hain (e.g. ["url1", "url2"] ya [{raw: "url"}])
       if (Array.isArray(parsed)) {
-        imageArray = parsed
-      } 
+        imageArray = parsed.map((item: any) => {
+          if (typeof item === 'string') return item;
+          if (typeof item === 'object' && item !== null) {
+            return item.enhanced || item.raw;
+          }
+          return null;
+        }).filter(Boolean);
+      }
       // Agar database mein images object hain (e.g. { raw: "url", enhanced: "url" })
       else if (typeof parsed === 'object') {
         if (parsed.enhanced) imageArray.push(parsed.enhanced)

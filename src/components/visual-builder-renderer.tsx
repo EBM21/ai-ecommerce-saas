@@ -24,7 +24,12 @@ function getSafeImg(p: any) {
         const raw = p.images
         const imgs = typeof raw === 'string' ? JSON.parse(raw) : raw
         
-        if (Array.isArray(imgs)) return imgs[0] || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'
+        if (Array.isArray(imgs)) {
+            const first = imgs[0]
+            if (typeof first === 'string') return first
+            if (typeof first === 'object' && first !== null) return first.enhanced || first.raw || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'
+            return 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'
+        }
         if (typeof imgs === 'object' && imgs !== null) {
             return imgs.enhanced || imgs.raw || Object.values(imgs).find(v => typeof v === 'string') || 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=800&q=80'
         }

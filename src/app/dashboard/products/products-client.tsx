@@ -230,7 +230,9 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                                     ) : (
                                         filtered.map((product, i) => {
                                             const style = STATUS_STYLES[product.status] ?? STATUS_STYLES.DRAFT
-                                            const imgUrl = product.images?.enhanced || product.images?.raw
+                                            const parsedImgs = typeof product.images === 'string' ? JSON.parse(product.images) : product.images;
+                                            const firstImg = Array.isArray(parsedImgs) ? parsedImgs[0] : parsedImgs;
+                                            const imgUrl = typeof firstImg === 'string' ? firstImg : (firstImg?.enhanced || firstImg?.raw);
                                             const isOutOfStock = product.inventoryCount === 0
                                             const isLow = product.inventoryCount > 0 && product.inventoryCount < 10
                                             const addedAt = new Date(product.createdAt).toLocaleDateString("en-US", {
