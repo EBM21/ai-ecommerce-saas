@@ -182,7 +182,8 @@ export function VisualBuilderRenderer({
     onSelectBlock,
     onAddBlock,
     theme,
-    bankDetails
+    bankDetails,
+    storeId
 }: { 
     blocks: BuilderBlock[], 
     products?: any[], 
@@ -194,7 +195,8 @@ export function VisualBuilderRenderer({
     onSelectBlock?: (id: string) => void,
     onAddBlock?: (type: string, index: number) => void,
     theme: ThemeConfig,
-    bankDetails?: string | null
+    bankDetails?: string | null,
+    storeId?: string
 }) {
     if (!blocks || blocks.length === 0) return null
 
@@ -209,11 +211,12 @@ export function VisualBuilderRenderer({
                     baseUrl={baseUrl} 
                     isEditMode={isEditMode}
                     isSelected={activeBlockId === block.id}
-                    onDelete={onDeleteBlock}
                     onSelect={onSelectBlock}
-                    onAddBelow={(blockId) => onAddBlock?.('text-hero', blocks.findIndex(b => b.id === blockId) + 1)}
+                    onDelete={onDeleteBlock}
+                    onAddBelow={(blockId) => onAddBlock?.('features-grid', blocks.findIndex(b => b.id === blockId) + 1)}
                     theme={theme}
                     bankDetails={bankDetails}
+                    storeId={storeId}
                 />
             ))}
         </div>
@@ -231,7 +234,8 @@ function RenderBlock({
     onSelect,
     onAddBelow,
     theme,
-    bankDetails
+    bankDetails,
+    storeId
 }: { 
     block: BuilderBlock, 
     products?: any[], 
@@ -243,7 +247,8 @@ function RenderBlock({
     onSelect?: (id: string) => void,
     onAddBelow?: (id: string) => void,
     theme: ThemeConfig,
-    bankDetails?: string | null
+    bankDetails?: string | null,
+    storeId?: string
 }) {
     return (
         <BlockWrapper 
@@ -263,12 +268,13 @@ function RenderBlock({
                 theme={theme} 
                 isEditMode={isEditMode}
                 bankDetails={bankDetails}
+                storeId={storeId}
             />
         </BlockWrapper>
     )
 }
 
-function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEditMode, bankDetails }: any) {
+function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEditMode, bankDetails, storeId }: any) {
     const currency = theme?.branding?.currency || 'USD'
     const format = (v: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(v)
 
@@ -313,7 +319,7 @@ function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEdi
         case 'system-checkout':
             return (
                 <div style={{ pointerEvents: isEditMode ? 'none' : 'auto' }}>
-                    <CheckoutClient storeId="preview" domain={domain || "preview"} baseUrl={baseUrl} theme={theme} blockProps={p} bankDetails={bankDetails} />
+                    <CheckoutClient storeId={storeId || "preview"} domain={domain || "preview"} baseUrl={baseUrl} theme={theme} blockProps={p} bankDetails={bankDetails} />
                 </div>
             )
 

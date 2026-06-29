@@ -68,6 +68,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ domai
                     baseUrl={baseUrl} 
                     theme={theme}
                     bankDetails={store.bankDetails}
+                    storeId={store.id}
                 />
             </div>
         )
