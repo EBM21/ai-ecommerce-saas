@@ -40,7 +40,7 @@ export async function applyTheme(themeId: string) {
 
         await prisma.store.update({
             where: { id: store.id },
-            data: { themeConfig: newConfig as Prisma.InputJsonValue }
+            data: { themeConfig: newConfig as unknown as Prisma.InputJsonValue }
         })
 
         revalidatePath('/dashboard/themes')

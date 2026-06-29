@@ -45,6 +45,7 @@ export interface BuilderBlock {
         // Effects
         opacity?: string
         boxShadow?: string
+        textTransform?: string
     }
 }
 
