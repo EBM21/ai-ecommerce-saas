@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import {
     Search, Filter, Download, MoreHorizontal,
     Eye, Truck, CheckCircle2, Clock, XCircle, ArrowUpRight, Loader2, Package,
-    ChevronDown, User, MapPin, Mail, Trash2, X, ExternalLink, ShoppingBag, CreditCard
+    ChevronDown, User, MapPin, Mail, Trash2, X, ExternalLink, ShoppingBag, CreditCard, Building, Banknote
 } from "lucide-react"
 import { getOrders, updateOrderStatus, deleteOrder, getOrderDetails } from "../orders/action"
 import { toast } from "sonner"
@@ -309,7 +309,7 @@ export default function OrdersPage() {
             </div>
 
             <Sheet open={isDetailsOpen} onOpenChange={setIsDetailsOpen}>
-                <SheetContent className="w-full sm:max-w-xl bg-card border-l border-border overflow-y-auto">
+                <SheetContent className="w-full sm:max-w-xl bg-card border-l border-border overflow-y-auto overflow-x-hidden">
                     <SheetHeader className="mb-8">
                         <div className="flex items-center justify-between">
                             <div className="space-y-1">
@@ -330,20 +330,34 @@ export default function OrdersPage() {
                             <p className="text-sm font-bold uppercase tracking-widest text-muted-foreground animate-pulse">Fetching records...</p>
                         </div>
                     ) : selectedOrder && (
-                        <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500">
+                        <div className="space-y-10 animate-in fade-in slide-in-from-right-4 duration-500 px-1">
                             <div className="grid grid-cols-2 gap-4">
-                                <div className="p-5 rounded-2xl bg-secondary/50 border border-border">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Order Status</p>
-                                    <StatusBadge status={selectedOrder.status} />
-                                </div>
-                                <div className="p-5 rounded-2xl bg-secondary/50 border border-border flex justify-between items-center">
-                                    <div>
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Total Paid</p>
-                                        <p className="font-black text-2xl text-foreground">{formatMoney(selectedOrder.totalAmount)}</p>
+                                <div className="p-5 rounded-2xl bg-card border border-border shadow-sm flex flex-col justify-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Order Status</p>
+                                    <div className="self-start">
+                                        <StatusBadge status={selectedOrder.status} />
                                     </div>
-                                    <div className="text-right">
-                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Method</p>
-                                        <p className="text-sm font-bold">{selectedOrder.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' : selectedOrder.paymentMethod === 'STRIPE' ? 'Credit Card' : 'COD'}</p>
+                                </div>
+                                <div className="p-5 rounded-2xl bg-card border border-border shadow-sm flex flex-col justify-center min-w-0">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Total Amount</p>
+                                    <p className="font-black text-2xl text-foreground truncate">{formatMoney(selectedOrder.totalAmount)}</p>
+                                </div>
+                                <div className="col-span-2 p-5 rounded-2xl bg-card border border-border shadow-sm flex flex-col justify-center">
+                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-3">Payment Method</p>
+                                    <div className="flex items-center gap-2">
+                                        {selectedOrder.paymentMethod === 'BANK_TRANSFER' ? (
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border bg-blue-500/10 text-blue-500 border-blue-500/20">
+                                                <Building className="size-3.5 shrink-0" /> <span className="truncate">Bank Transfer</span>
+                                            </div>
+                                        ) : selectedOrder.paymentMethod === 'STRIPE' ? (
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border bg-purple-500/10 text-purple-500 border-purple-500/20">
+                                                <CreditCard className="size-3.5 shrink-0" /> <span className="truncate">Credit Card</span>
+                                            </div>
+                                        ) : (
+                                            <div className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-bold uppercase tracking-wider border bg-orange-500/10 text-orange-500 border-orange-500/20">
+                                                <Banknote className="size-3.5 shrink-0" /> <span className="truncate">Cash on Delivery</span>
+                                            </div>
+                                        )}
                                     </div>
                                 </div>
                             </div>
@@ -371,9 +385,9 @@ export default function OrdersPage() {
                                         <div className="size-12 rounded-2xl bg-indigo-500/10 flex items-center justify-center font-bold text-indigo-500 text-lg">
                                             {selectedOrder.customer?.name?.[0] || "G"}
                                         </div>
-                                        <div>
-                                            <p className="font-bold text-foreground">{selectedOrder.customer?.name || "Guest"}</p>
-                                            <p className="text-sm text-muted-foreground">{selectedOrder.customer?.email}</p>
+                                        <div className="min-w-0 flex-1">
+                                            <p className="font-bold text-foreground truncate">{selectedOrder.customer?.name || "Guest"}</p>
+                                            <p className="text-sm text-muted-foreground truncate">{selectedOrder.customer?.email}</p>
                                         </div>
                                     </div>
                                     <button 
@@ -390,7 +404,7 @@ export default function OrdersPage() {
                                     <MapPin className="size-3.5" /> Delivery Address
                                 </h4>
                                 <div className="p-6 rounded-[2rem] bg-card border border-border shadow-sm">
-                                    <p className="text-sm font-medium text-foreground leading-relaxed">
+                                    <p className="text-sm font-medium text-foreground leading-relaxed break-words whitespace-pre-wrap">
                                         {selectedOrder.shippingAddress?.address || "No shipping address provided."}
                                     </p>
                                 </div>
@@ -402,20 +416,20 @@ export default function OrdersPage() {
                                 </h4>
                                 <div className="space-y-3">
                                     {selectedOrder.orderItems?.map((item: any, i: number) => (
-                                        <div key={i} className="flex items-center justify-between p-4 rounded-2xl bg-secondary/30 border border-border/50">
-                                            <div className="flex items-center gap-4">
-                                                <div className="size-10 rounded-xl bg-secondary flex items-center justify-center border border-border">
+                                        <div key={i} className="flex items-center justify-between gap-4 p-4 rounded-2xl bg-secondary/30 border border-border/50">
+                                            <div className="flex items-center gap-4 min-w-0 flex-1">
+                                                <div className="size-10 rounded-xl bg-secondary flex items-center justify-center border border-border shrink-0">
                                                     <Package className="size-5 opacity-30" />
                                                 </div>
-                                                <div>
-                                                    <p className="text-sm font-bold text-foreground">{item.productTitle}</p>
+                                                <div className="min-w-0 flex-1">
+                                                    <p className="text-sm font-bold text-foreground truncate">{item.productTitle}</p>
                                                     {item.variantName && (
-                                                        <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest">{item.variantName}</p>
+                                                        <p className="text-[10px] font-bold text-indigo-400 uppercase tracking-widest truncate">{item.variantName}</p>
                                                     )}
                                                     <p className="text-[11px] text-muted-foreground">Qty: {item.quantity} × {formatMoney(item.priceAtPurchase)}</p>
                                                 </div>
                                             </div>
-                                            <p className="font-black text-sm">{formatMoney(item.quantity * item.priceAtPurchase)}</p>
+                                            <p className="font-black text-sm shrink-0">{formatMoney(item.quantity * item.priceAtPurchase)}</p>
                                         </div>
                                     ))}
                                 </div>
