@@ -45,7 +45,7 @@ function SettingsContent() {
     const [formData, setFormData] = useState({
         general: { storeName: "", email: "", phone: "" },
         domain: { subdomain: "", customDomain: "" },
-        payments: { stripePublicKey: "", stripeSecretKey: "" },
+        payments: { stripePublicKey: "", stripeSecretKey: "", bankDetails: "" },
         policies: { privacy: "", refund: "", terms: "", shipping: "" }
     })
 
@@ -80,7 +80,7 @@ function SettingsContent() {
                     setFormData({
                         general: { storeName: s.name || "", email: s.email || "", phone: s.phone || "" },
                         domain: { subdomain: s.subdomain || "", customDomain: s.customDomain || "" },
-                        payments: { stripePublicKey: s.stripePublicKey || "", stripeSecretKey: s.stripeSecretKey || "" },
+                        payments: { stripePublicKey: s.stripePublicKey || "", stripeSecretKey: s.stripeSecretKey || "", bankDetails: s.bankDetails || "" },
                         policies: { 
                             privacy: parsedPolicies.privacy || "", 
                             refund: parsedPolicies.refund || "", 
@@ -124,6 +124,7 @@ function SettingsContent() {
                 customDomain: formData.domain.customDomain,
                 stripePublicKey: formData.payments.stripePublicKey,
                 stripeSecretKey: formData.payments.stripeSecretKey,
+                bankDetails: formData.payments.bankDetails,
                 policies: formData.policies
             })
             if (res.success) {
@@ -385,9 +386,11 @@ function SettingsContent() {
                         {activeTab === "PAYMENTS" && (
                             <motion.div initial={{ opacity: 0, y: 10 }} animate={{ opacity: 1, y: 0 }} className="space-y-8">
                                 <SectionHeader title="Payment Gateways" description="Configure Stripe to accept credit cards." />
+                                
                                 <div className="bg-card border border-border/50 rounded-[2.5rem] p-8 space-y-6 shadow-sm relative overflow-hidden">
                                     <div className="absolute top-0 right-0 p-8 opacity-5"><CreditCard className="size-32" /></div>
                                     <div className="relative z-10 space-y-6 max-w-xl">
+                                        <h3 className="text-lg font-bold mb-4">Credit Card (Stripe)</h3>
                                         <InputField label="Stripe Public Key" icon={CreditCard} value={formData.payments.stripePublicKey} onChange={v => handleChange("payments", "stripePublicKey", v)} placeholder="pk_test_..." />
                                         <InputField label="Stripe Secret Key" icon={ShieldAlert} value={formData.payments.stripeSecretKey} onChange={v => handleChange("payments", "stripeSecretKey", v)} placeholder="sk_test_..." type="password" />
                                     </div>

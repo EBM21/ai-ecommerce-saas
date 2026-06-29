@@ -5,22 +5,25 @@ import Stripe from "stripe"
 import { z } from 'zod'
 
 const orderItemSchema = z.object({
-  productId: z.string().uuid('Invalid product ID'),
-  variantId: z.string().uuid('Invalid variant ID').optional().nullable(),
+  productId: z.string().min(1, 'Invalid product ID'),
+  variantId: z.string().optional().nullable(),
   variantName: z.string().optional().nullable(),
   quantity: z.preprocess((val) => typeof val === 'string' ? parseInt(val, 10) : val, z.number().int().positive('Quantity must be greater than 0')),
-  price: z.preprocess((val) => typeof val === 'string' ? parseFloat(val) : val, z.number().positive('Price must be positive')),
+  price: z.preprocess((val) => typeof val === 'string' ? parseFloat(val) : val, z.number().min(0, 'Price cannot be negative')),
   title: z.string().min(1, 'Product title is required'),
 })
 
 const placeOrderSchema = z.object({
-  storeId: z.string().uuid('Invalid store ID'),
+  storeId: z.string().min(1, 'Invalid store ID'),
   customerEmail: z.string().email('Invalid email address'),
   customerName: z.string().min(1, 'Customer name is required'),
-  totalAmount: z.preprocess((val) => typeof val === 'string' ? parseFloat(val) : val, z.number().positive('Total amount must be positive')),
+  phone: z.string().min(5, 'Phone number is required'),
+  totalAmount: z.preprocess((val) => typeof val === 'string' ? parseFloat(val) : val, z.number().min(0, 'Total amount cannot be negative')),
   address: z.string().min(1, 'Address is required'),
   baseUrl: z.string().optional(),
   domain: z.string().min(1, 'Domain is required').optional(),
+  paymentMethod: z.string().default('COD'),
+  paymentScreenshot: z.string().optional().nullable(),
   items: z.array(orderItemSchema).nonempty('Order must contain at least one item'),
 })
 
@@ -45,6 +48,11 @@ export async function placeOrder(orderData: any) {
             return { success: false, error: "Store not found" }
         }
 
+        // If checking out with dummy product, simulate success
+        if (data.items.some(item => item.productId === 'dummy')) {
+            return { success: true, orderId: "dummy-order-" + Date.now() }
+        }
+
         // 1 & 2. Find/create customer and create order in a single transaction
         const { order } = await prisma.$transaction(async (tx) => {
             let customer = await tx.customer.findUnique({
@@ -62,14 +70,18 @@ export async function placeOrder(orderData: any) {
                         storeId: data.storeId,
                         email: data.customerEmail,
                         name: data.customerName,
+                        phone: data.phone,
                         userId: user?.id || null
                     }
                 })
-            } else if (!customer.userId && user) {
-                // Link existing guest customer to this user account
+            } else {
                 customer = await tx.customer.update({
                     where: { id: customer.id },
-                    data: { userId: user.id, name: data.customerName }
+                    data: { 
+                        userId: (!customer.userId && user) ? user.id : customer.userId, 
+                        name: data.customerName,
+                        phone: data.phone
+                    }
                 })
             }
 
@@ -79,6 +91,8 @@ export async function placeOrder(orderData: any) {
                     customerId: customer.id,
                     totalAmount: data.totalAmount,
                     status: "PENDING",
+                    paymentMethod: data.paymentMethod,
+                    paymentScreenshot: data.paymentScreenshot,
                     shippingAddress: { address: data.address },
                     orderItems: {
                         create: data.items.map((item) => ({
@@ -95,7 +109,11 @@ export async function placeOrder(orderData: any) {
             return { customer, order }
         })
 
-        // 3. Handle Stripe if configured
+        // 3. Initiate Payment (Stripe) only if paymentMethod is STRIPE and store has Stripe keys
+        if (data.paymentMethod !== 'STRIPE') {
+            return { success: true, orderId: order.id }
+        }
+
         if (store.stripeSecretKey) {
             try {
                 const stripe = new Stripe(store.stripeSecretKey, {

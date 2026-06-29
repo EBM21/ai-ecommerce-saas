@@ -1403,7 +1403,28 @@ export default function VisualBuilder({
         const homeBlocks = config.pageBlocks?.home ?? config.blocks ?? []
         if (currentPage === 'home') return homeBlocks
 
-        const localBlocks = config.pageBlocks?.[currentPage] ?? []
+        let localBlocks = config.pageBlocks?.[currentPage] ?? []
+        
+        // Auto-inject system blocks if the page is empty, to match storefront behavior
+        if (localBlocks.length === 0) {
+            if (currentPage === 'checkout') {
+                localBlocks = [{
+                    id: 'default-checkout',
+                    type: 'system-checkout',
+                    props: {},
+                    animation: { entrance: 'none', hover: 'none' },
+                    styles: { paddingTop: '0px', paddingBottom: '0px' }
+                }]
+            } else if (currentPage === 'product') {
+                localBlocks = [{
+                    id: 'default-product',
+                    type: 'system-product-details',
+                    props: {},
+                    animation: { entrance: 'none', hover: 'none' },
+                    styles: { paddingTop: '0px', paddingBottom: '0px' }
+                }]
+            }
+        }
         
         // Dynamic global header/footer
         const globalHeader = homeBlocks.find(b => b.type.startsWith('header-'))

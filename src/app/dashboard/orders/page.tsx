@@ -4,7 +4,7 @@ import React, { useState, useEffect } from "react"
 import {
     Search, Filter, Download, MoreHorizontal,
     Eye, Truck, CheckCircle2, Clock, XCircle, ArrowUpRight, Loader2, Package,
-    ChevronDown, User, MapPin, Mail, Trash2, X, ExternalLink, ShoppingBag
+    ChevronDown, User, MapPin, Mail, Trash2, X, ExternalLink, ShoppingBag, CreditCard
 } from "lucide-react"
 import { getOrders, updateOrderStatus, deleteOrder, getOrderDetails } from "../orders/action"
 import { toast } from "sonner"
@@ -336,11 +336,31 @@ export default function OrdersPage() {
                                     <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Order Status</p>
                                     <StatusBadge status={selectedOrder.status} />
                                 </div>
-                                <div className="p-5 rounded-2xl bg-secondary/50 border border-border">
-                                    <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Total Paid</p>
-                                    <p className="font-black text-2xl text-foreground">{formatMoney(selectedOrder.totalAmount)}</p>
+                                <div className="p-5 rounded-2xl bg-secondary/50 border border-border flex justify-between items-center">
+                                    <div>
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-2">Total Paid</p>
+                                        <p className="font-black text-2xl text-foreground">{formatMoney(selectedOrder.totalAmount)}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <p className="text-[10px] font-bold uppercase tracking-widest text-muted-foreground mb-1">Method</p>
+                                        <p className="text-sm font-bold">{selectedOrder.paymentMethod === 'BANK_TRANSFER' ? 'Bank Transfer' : selectedOrder.paymentMethod === 'STRIPE' ? 'Credit Card' : 'COD'}</p>
+                                    </div>
                                 </div>
                             </div>
+
+                            {selectedOrder.paymentMethod === 'BANK_TRANSFER' && selectedOrder.paymentScreenshot && (
+                                <div className="space-y-4">
+                                    <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2 flex items-center gap-2">
+                                        <CreditCard className="size-3.5" /> Payment Proof
+                                    </h4>
+                                    <div className="p-6 rounded-[2rem] bg-card border border-border shadow-sm flex flex-col items-center">
+                                        <p className="text-sm text-muted-foreground mb-4 w-full text-left">The customer uploaded the following screenshot as proof of payment.</p>
+                                        <a href={selectedOrder.paymentScreenshot} target="_blank" rel="noopener noreferrer" className="block max-w-sm rounded-xl overflow-hidden border border-border shadow-sm hover:opacity-90 transition-opacity">
+                                            <img src={selectedOrder.paymentScreenshot} alt="Payment Screenshot" className="w-full h-auto object-cover" />
+                                        </a>
+                                    </div>
+                                </div>
+                            )}
 
                             <div className="space-y-4">
                                 <h4 className="text-xs font-black uppercase tracking-widest text-muted-foreground border-b border-border pb-2 flex items-center gap-2">
