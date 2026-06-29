@@ -282,7 +282,11 @@ function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEdi
                 try {
                     const parsed = typeof sampleProduct.images === 'string' ? JSON.parse(sampleProduct.images) : sampleProduct.images
                     if (Array.isArray(parsed)) {
-                        imageArray = parsed
+                        imageArray = parsed.map((item: any) => {
+                            if (typeof item === 'string') return item;
+                            if (typeof item === 'object' && item !== null) return item.enhanced || item.raw;
+                            return null;
+                        }).filter(Boolean)
                     } else if (typeof parsed === 'object') {
                         if (parsed.enhanced) imageArray.push(parsed.enhanced)
                         if (parsed.raw) imageArray.push(parsed.raw)
@@ -342,6 +346,30 @@ function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEdi
                         <h1 className="text-6xl md:text-8xl font-black tracking-tighter text-white mb-6 leading-none">{p.headline}</h1>
                         <p className="text-xl text-white/80 mb-10 font-medium">{p.subheadline}</p>
                         <Link href={`${baseUrl}${p.buttonUrl}`} className="px-10 py-5 bg-white text-black rounded-full font-black uppercase tracking-widest hover:scale-105 transition-transform inline-block no-underline shadow-xl">{p.buttonText}</Link>
+                    </div>
+                </div>
+            )
+
+        case 'hero-brutalist':
+            return (
+                <div className="max-w-7xl mx-auto px-6 py-20 border-b-8 border-r-8 border-foreground bg-background mb-10 overflow-hidden relative">
+                    <h1 className="text-6xl md:text-[8rem] font-black tracking-tighter leading-[0.8] uppercase text-foreground mb-10 break-words">{p.headline}</h1>
+                    <p className="text-2xl md:text-4xl font-bold uppercase tracking-widest max-w-3xl mb-12" style={{ color: "var(--theme-primary, #ec4899)" }}>{p.subheadline}</p>
+                    <Link href={`${baseUrl}${p.buttonUrl}`} className="inline-block px-12 py-6 bg-foreground text-background text-xl md:text-2xl font-black uppercase tracking-widest hover:-translate-y-2 hover:translate-x-2 transition-transform shadow-[8px_8px_0px_0px_var(--theme-primary,#ec4899)]">{p.buttonText}</Link>
+                </div>
+            )
+
+        case 'hero-video':
+            return (
+                <div className="relative h-[80vh] w-full overflow-hidden flex items-center justify-center">
+                    <video autoPlay loop muted playsInline className="absolute inset-0 w-full h-full object-cover opacity-60">
+                        <source src={p.videoUrl || "https://player.vimeo.com/external/459389137.sd.mp4?s=d6f8dc51656c0ba2d10ffb573a6e3860bb6321ee&profile_id=164&oauth2_token_id=57447761"} type="video/mp4" />
+                    </video>
+                    <div className="absolute inset-0 bg-black/40" />
+                    <div className="relative z-10 text-center max-w-5xl px-6">
+                        <h1 className="text-5xl md:text-8xl font-black tracking-widest uppercase text-white mb-8">{p.headline}</h1>
+                        <p className="text-xl md:text-2xl font-light text-white/90 mb-12">{p.subheadline}</p>
+                        <Link href={`${baseUrl}${p.buttonUrl}`} className="inline-block px-10 py-5 border border-white text-white backdrop-blur-sm bg-white/10 hover:bg-white hover:text-black transition-colors font-bold uppercase tracking-widest shadow-2xl">{p.buttonText}</Link>
                     </div>
                 </div>
             )
@@ -430,6 +458,28 @@ function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEdi
                                 </div>
                                 <h3 className="font-bold text-lg mb-1">{prod.title}</h3>
                                 <p className="text-primary font-black tracking-widest">{format(Number(prod.price))}</p>
+                            </Link>
+                        ))}
+                    </div>
+                </div>
+            )
+
+        case 'product-masonry':
+            const masonryProds = products?.slice(0, p.count || 6) || []
+            return (
+                <div className="max-w-7xl mx-auto px-6 py-10">
+                    <h2 className="text-5xl font-black mb-16 tracking-tighter text-center uppercase">{p.title}</h2>
+                    <div className="columns-1 sm:columns-2 lg:columns-3 gap-8 space-y-8">
+                        {masonryProds.map((prod: any, i: number) => (
+                            <Link key={prod.id} href={`${baseUrl}/product/${prod.id}`} className="block break-inside-avoid group no-underline">
+                                <div className={`w-full ${i % 2 === 0 ? 'aspect-[3/4]' : 'aspect-[4/3]'} overflow-hidden bg-secondary mb-4 relative`}>
+                                    <img src={getSafeImg(prod)} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-1000" alt={prod.title} />
+                                    <div className="absolute inset-0 bg-black/20 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                                        <span className="px-6 py-3 bg-white text-black font-bold uppercase tracking-widest text-xs">View Product</span>
+                                    </div>
+                                </div>
+                                <h3 className="font-bold text-lg mt-4">{prod.title}</h3>
+                                <p className="text-muted-foreground">{format(Number(prod.price))}</p>
                             </Link>
                         ))}
                     </div>
@@ -564,6 +614,19 @@ function InnerRenderer({ type, props: p, products, domain, baseUrl, theme, isEdi
                         <span className="text-lg md:text-xl font-light tracking-[0.2em] md:tracking-[0.3em] uppercase truncate max-w-[200px]">{theme.branding.storeName}</span>
                         <nav className="hidden md:flex gap-10">
                             {p.links?.map((l: any, i: number) => <Link key={i} href={`${baseUrl}${l.href}`} className="text-[10px] font-bold uppercase tracking-widest no-underline opacity-60 hover:opacity-100 transition-opacity">{l.label}</Link>)}
+                        </nav>
+                        <button className="md:hidden p-2 opacity-60"><Menu className="size-5" /></button>
+                    </div>
+                </div>
+            )
+
+        case 'header-centered':
+            return (
+                <div className="w-full border-b border-border bg-background py-8">
+                    <div className="max-w-7xl mx-auto px-6 flex flex-col items-center justify-center gap-6">
+                        <span className="text-3xl md:text-5xl font-serif tracking-widest uppercase text-foreground">{theme.branding.storeName}</span>
+                        <nav className="hidden md:flex gap-8 border-t border-border pt-6 w-full justify-center">
+                            {p.links?.map((l: any, i: number) => <Link key={i} href={`${baseUrl}${l.href}`} className="text-xs font-bold uppercase tracking-[0.2em] no-underline opacity-50 hover:opacity-100 transition-all">{l.label}</Link>)}
                         </nav>
                         <button className="md:hidden p-2 opacity-60"><Menu className="size-5" /></button>
                     </div>

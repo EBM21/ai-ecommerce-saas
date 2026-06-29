@@ -12,7 +12,7 @@ import { getStoreUrl } from "@/lib/utils"
 import {
   LayoutDashboard, Package, ShoppingBag, BarChart2,
   Sparkles, Home, Settings, ChevronLeft, ChevronRight,
-  Bell, Search, LogOut, Zap, Command, X, Palette, Layers, Play,
+  Bell, Search, LogOut, Zap, Command, X, Palette, Layers, Play, LayoutTemplate,
   User, CreditCard, HelpCircle, ChevronUp, AlertCircle, Menu, Megaphone
 } from "lucide-react"
 import { UserProfileHeader } from "@/components/user-profile-header"
@@ -50,6 +50,7 @@ const NAV_GROUPS: NavGroup[] = [
   {
     label: "Store",
     items: [
+      { label: "Themes", href: "/dashboard/themes", icon: LayoutTemplate, badge: "8" },
       { label: "Build Store", href: "/dashboard/customizer", icon: Palette },
       { label: "Preview", href: "/store", icon: Play },
       { label: "Settings", href: "/dashboard/settings", icon: Settings },
