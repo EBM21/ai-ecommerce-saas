@@ -7,6 +7,40 @@ import { ArrowLeft, Loader2, Lock, CheckCircle2 } from "lucide-react"
 import { placeOrder } from "./action"
 import { createClient } from "@/utils/supabase/client"
 
+const compressImage = (file: File): Promise<string> => {
+    return new Promise((resolve, reject) => {
+        const reader = new FileReader()
+        reader.readAsDataURL(file)
+        reader.onload = (event) => {
+            const img = new Image()
+            img.src = event.target?.result as string
+            img.onload = () => {
+                const canvas = document.createElement('canvas')
+                const MAX_WIDTH = 800
+                let width = img.width
+                let height = img.height
+
+                if (width > MAX_WIDTH) {
+                    height = Math.round((height * MAX_WIDTH) / width)
+                    width = MAX_WIDTH
+                }
+
+                canvas.width = width
+                canvas.height = height
+
+                const ctx = canvas.getContext('2d')
+                ctx?.drawImage(img, 0, 0, width, height)
+
+                // Compress to JPEG with 70% quality to ensure it easily fits under Next.js 1MB limit
+                const dataUrl = canvas.toDataURL('image/jpeg', 0.7)
+                resolve(dataUrl)
+            }
+            img.onerror = (error) => reject(error)
+        }
+        reader.onerror = (error) => reject(error)
+    })
+}
+
 export default function CheckoutClient({ storeId, domain, theme, user, baseUrl, blockProps, bankDetails }: { storeId: string, domain: string, theme: any, user?: any, baseUrl: string, blockProps?: any, bankDetails?: string | null }) {
     const { items, cartTotal, clearCart } = useCart()
     const [loading, setLoading] = useState(false)
@@ -52,16 +86,15 @@ export default function CheckoutClient({ storeId, domain, theme, user, baseUrl, 
 
         let screenshotUrl = null
         if (paymentMethod === 'BANK_TRANSFER' && screenshotFile && storeId !== "preview") {
-            const supabase = createClient()
-            const fileExt = screenshotFile.name.split('.').pop()
-            const fileName = `payment-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
-            const { data, error } = await supabase.storage.from('product-images').upload(fileName, screenshotFile)
-            if (error) {
-                setErrors(prev => ({ ...prev, screenshot: "Failed to upload screenshot." }))
+            try {
+                // Compress and convert file to base64 to bypass any storage bucket/RLS issues
+                // This also ensures the payload is well under the 1MB Server Action limit
+                screenshotUrl = await compressImage(screenshotFile)
+            } catch (err: any) {
+                setErrors(prev => ({ ...prev, screenshot: "Failed to process screenshot." }))
                 setLoading(false)
                 return
             }
-            screenshotUrl = supabase.storage.from('product-images').getPublicUrl(fileName).data.publicUrl
         }
 
         const orderData = {

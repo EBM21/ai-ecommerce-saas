@@ -16,8 +16,59 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Nexus | AI-Powered E-commerce SaaS",
-  description: "The next generation platform to build and scale your store.",
+  metadataBase: new URL(process.env.NEXT_PUBLIC_APP_URL || 'https://quadlix.com'),
+  title: {
+    default: "Quadlix - The AI-Powered E-commerce Platform | Shopify Alternative",
+    template: "%s | Quadlix AI E-commerce",
+  },
+  description: "Create, manage, and scale your online store with Quadlix. The smartest AI-driven alternative to Shopify for modern ecommerce businesses. Launch in minutes.",
+  keywords: [
+    "ecommerce platform", "shopify alternative", "create online store", 
+    "sell online", "ai ecommerce", "quadlix", "quadlify", "build ecommerce website",
+    "online business", "dropshipping platform"
+  ],
+  authors: [{ name: "Quadlix Inc." }],
+  creator: "Quadlix",
+  publisher: "Quadlix",
+  formatDetection: {
+    email: false,
+    address: false,
+    telephone: false,
+  },
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://quadlix.com",
+    siteName: "Quadlix",
+    title: "Quadlix - Build Your AI-Powered Online Store",
+    description: "The next generation AI ecommerce platform to build and scale your store. A smarter, faster alternative to Shopify.",
+    images: [
+      {
+        url: "/og-image.jpg",
+        width: 1200,
+        height: 630,
+        alt: "Quadlix AI E-commerce Platform",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title: "Quadlix - The AI-Powered E-commerce Platform",
+    description: "Launch your AI-driven ecommerce store in minutes. The ultimate Shopify alternative.",
+    images: ["/og-image.jpg"],
+    creator: "@quadlix",
+  },
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
 };
 
 export default function RootLayout({

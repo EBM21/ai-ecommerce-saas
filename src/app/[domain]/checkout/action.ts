@@ -29,6 +29,45 @@ const placeOrderSchema = z.object({
 
 import { createClient } from "@/utils/supabase/server"
 
+export async function uploadPaymentScreenshot(formData: FormData) {
+  try {
+    const file = formData.get('file') as File
+    if (!file) {
+      throw new Error("No image file provided.")
+    }
+
+    const supabase = await createClient()
+
+    const fileExt = file.name.split('.').pop()
+    const fileName = `payment-${Date.now()}-${Math.random().toString(36).substring(7)}.${fileExt}`
+
+    const arrayBuffer = await file.arrayBuffer()
+    const buffer = Buffer.from(arrayBuffer)
+
+    const { data: uploadData, error: uploadError } = await supabase.storage
+      .from('product-images')
+      .upload(fileName, buffer, {
+        contentType: file.type,
+        upsert: false
+      })
+
+    if (uploadError) {
+      console.error("Supabase upload error:", uploadError)
+      throw uploadError
+    }
+
+    const { data: publicUrlData } = supabase.storage
+      .from('product-images')
+      .getPublicUrl(fileName)
+
+    return { success: true, url: publicUrlData.publicUrl }
+  } catch (error: any) {
+    console.error("Screenshot Upload Error:", error)
+    return { success: false, error: error.message }
+  }
+}
+
+
 export async function placeOrder(orderData: any) {
     try {
         const validated = placeOrderSchema.safeParse(orderData)
