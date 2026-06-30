@@ -6,6 +6,7 @@ import { createClient } from '@/utils/supabase/server'
 import prisma from '@/lib/prisma'
 import { z } from 'zod'
 import { Prisma } from '@prisma/client'
+import { PRE_BUILT_THEMES } from '@/lib/themes/pre-built'
 
 const createStoreSchema = z.object({
   name: z.string().min(1, 'Store name is required').max(100, 'Store name must be 100 characters or less'),
@@ -48,6 +49,25 @@ export async function createStore(data: {
   const trialEndsAt = new Date()
   trialEndsAt.setDate(trialEndsAt.getDate() + 14)
 
+  const rawThemeConfig: any = themeConfig || {}
+  const themeMap: Record<string, string> = {
+    'dark-minimal': 'theme-minimal-store',
+    'light-clean': 'theme-beauty-blush',
+    'warm-earthy': 'theme-home-haven',
+    'neon-bold': 'theme-urban-street',
+  }
+  const mappedThemeId = themeMap[rawThemeConfig.theme] || 'theme-minimal-store'
+  const prebuilt = PRE_BUILT_THEMES.find(t => t.id === mappedThemeId) || PRE_BUILT_THEMES[0]
+
+  const finalThemeConfig = {
+    ...prebuilt.config,
+    branding: {
+      ...prebuilt.config.branding,
+      storeName: name,
+      currency: rawThemeConfig.currency || 'USD'
+    }
+  }
+
   // Create store
   try {
     await prisma.store.create({
@@ -55,7 +75,7 @@ export async function createStore(data: {
         ownerId: user.id,
         name,
         subdomain,
-        themeConfig: themeConfig as Prisma.InputJsonValue,
+        themeConfig: finalThemeConfig as Prisma.InputJsonValue,
         trialEndsAt
       },
     })
