@@ -18,11 +18,15 @@ export async function login(data: { email: string; password: string }) {
 
   const supabase = await createClient()
 
+  console.log("Attempting login for", validated.data.email)
   const { error, data: authData } = await supabase.auth.signInWithPassword(validated.data)
 
   if (error) {
+    console.error("Login error:", error.message)
     return { success: false, error: error.message }
   }
+  
+  console.log("Login successful, user:", authData.user?.id)
 
   // Session successfully established by supabase SSR middleware cookies
   revalidatePath('/', 'layout')
