@@ -64,7 +64,7 @@ export async function storefrontSignup(formData: FormData, domain: string, store
         password,
         options: {
             data: { full_name: name },
-            emailRedirectTo: `${process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000'}${baseUrl}/login`
+            emailRedirectTo: `${(await headers()).get('x-forwarded-proto') || 'http'}://${(await headers()).get('host')}/api/auth/callback?next=${baseUrl}/account`
         }
     })
 

@@ -1,6 +1,7 @@
 'use server'
 
 import { revalidatePath } from 'next/cache'
+import { headers } from 'next/headers'
 import { createClient } from '@/utils/supabase/server'
 import { z } from 'zod'
 
@@ -37,7 +38,17 @@ export async function signup(data: { email: string; password: string }) {
   const supabase = await createClient()
 
   // Supabase often requires email confirmation by default depending on project settings.
-  const { error, data: authData } = await supabase.auth.signUp(validated.data)
+  const headersList = await headers()
+  const protocol = headersList.get('x-forwarded-proto') || 'http'
+  const host = headersList.get('host')
+  const origin = `${protocol}://${host}`
+
+  const { error, data: authData } = await supabase.auth.signUp({
+    ...validated.data,
+    options: {
+      emailRedirectTo: `${origin}/api/auth/callback?next=/dashboard`
+    }
+  })
 
   if (error) {
     return { success: false, error: error.message }
