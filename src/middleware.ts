@@ -14,28 +14,36 @@ export async function middleware(request: NextRequest) {
   // ── Detect if we're running locally ──
   const isLocal = hostname.includes('localhost') || hostname.includes('127.0.0.1')
 
-  // ── On local: always dashboard (no subdomain routing locally) ──
+  let currentHost = hostname
+
   if (isLocal) {
-    return await updateSession(request)
+    // For local development, support subdomains (e.g., mystore.localhost)
+    currentHost = hostname.replace(`.localhost`, "")
+    currentHost = currentHost.replace(`localhost`, "") // fallback if just localhost
+    currentHost = currentHost.replace(`127.0.0.1`, "") 
+
+    // If it's just localhost (no subdomain), it's the dashboard
+    if (currentHost === "") {
+        return await updateSession(request)
+    }
+  } else {
+    // ── Dashboard cases ──
+    const isDashboard =
+        hostname === `app.${rootDomain}` ||
+        hostname === `quadlify.${rootDomain}` ||
+        hostname === rootDomain ||
+        hostname.endsWith('.vercel.app') ||
+        hostname.endsWith('.railway.app') ||
+        hostname.endsWith('.ngrok-free.app') ||
+        hostname.endsWith('.ngrok.io') ||
+        hostname.endsWith('.loca.lt') // localtunnel
+
+    if (isDashboard) {
+        return await updateSession(request)
+    }
+
+    currentHost = hostname.replace(`.${rootDomain}`, "")
   }
-
-  // ── Dashboard cases ──
-  // 1. App subdomain: quadlify.quadlix.com
-  // 2. Exact root domain: quadlix.com
-  // 3. Vercel preview URL
-  const isDashboard =
-    hostname === `quadlify.${rootDomain}` ||
-    hostname === rootDomain ||
-    hostname.endsWith('.vercel.app')
-
-  if (isDashboard) {
-    return await updateSession(request)
-  }
-
-  // ── Storefront Subdomain Logic ──
-  // Strip the root domain suffix to get the subdomain
-  // e.g. "mystore.quadlix.com" → "mystore"
-  const currentHost = hostname.replace(`.${rootDomain}`, "")
 
   // Pass through Next.js internals and API routes
   if (

@@ -239,7 +239,7 @@ export default function EditProductClient({ product }: { product: any }) {
                             ) : currentImage ? (
                                 <>
                                     <img src={currentImage} alt="Product" className="w-full h-full object-cover group-hover:opacity-40 transition-opacity" />
-                                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                                    <div className="absolute inset-0 flex flex-col items-center justify-center opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                         <div className="p-3 bg-secondary rounded-full backdrop-blur-md mb-2"><Upload className="size-5 text-foreground" /></div>
                                         <span className="text-xs font-bold text-foreground uppercase tracking-widest">Replace Image</span>
                                     </div>

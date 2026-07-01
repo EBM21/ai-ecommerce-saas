@@ -189,7 +189,7 @@ export default function CategoriesClient({ categories = [], domain = "" }: { cat
                                                     <button 
                                                         onClick={() => handleDelete(cat.id, cat.name)}
                                                         disabled={deletingId === cat.id}
-                                                        className="p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400/80 hover:text-rose-400 transition-all border border-transparent hover:border-rose-500/30 opacity-0 group-hover:opacity-100"
+                                                        className="p-2.5 rounded-lg bg-rose-500/10 hover:bg-rose-500/20 text-rose-400/80 hover:text-rose-400 transition-all border border-transparent hover:border-rose-500/30 opacity-100 md:opacity-0 group-hover:opacity-100"
                                                     >
                                                         {deletingId === cat.id ? <Loader2 className="size-4 animate-spin" /> : <Trash2 className="size-4" />}
                                                     </button>

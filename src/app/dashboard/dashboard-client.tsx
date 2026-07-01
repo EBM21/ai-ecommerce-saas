@@ -98,12 +98,12 @@ export default function DashboardClient({
                     </p>
                 </div>
 
-                <div className="flex items-center gap-3">
-                    <button onClick={handleExport} className="hidden sm:flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary border border-border text-secondary-foreground hover:bg-secondary/80 transition-all text-sm">
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <button onClick={handleExport} className="hidden sm:flex w-full sm:w-auto items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary border border-border text-secondary-foreground hover:bg-secondary/80 transition-all text-sm">
                         <Download className="size-4" /> Export Data
                     </button>
                     <Link href="/dashboard/products/new"
-                        className="flex items-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-foreground text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 transition-all hover:scale-[1.02]">
+                        className="flex w-full sm:w-auto items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-indigo-600 text-white text-sm font-bold shadow-[0_0_20px_rgba(79,70,229,0.4)] hover:bg-indigo-500 transition-all hover:scale-[1.02]">
                         <Plus className="size-4" /> Create Listing
                     </Link>
                 </div>

@@ -69,7 +69,10 @@ export default function OnboardingPage() {
         setLoading(false)
         return
       }
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.message?.includes('NEXT_REDIRECT') || err?.digest?.includes('NEXT_REDIRECT')) {
+        return; // Ignore Next.js redirect errors
+      }
       console.error("Launch error:", err)
       const errMsg = err instanceof Error ? err.message : "Store creation failed. Please try again."
       setError(errMsg)

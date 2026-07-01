@@ -327,7 +327,7 @@ function NewProductContent() {
                         <button
                           type="button"
                           onClick={() => removeImage(idx)}
-                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-secondary text-foreground/90 hover:text-rose-400 hover:bg-black/80 opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
+                          className="absolute top-2 right-2 p-1.5 rounded-lg bg-secondary text-foreground/90 hover:text-rose-400 hover:bg-black/80 opacity-100 md:opacity-0 group-hover:opacity-100 transition-all backdrop-blur-sm"
                         >
                           <Trash2 className="size-4" />
                         </button>

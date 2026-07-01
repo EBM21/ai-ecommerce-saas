@@ -163,12 +163,12 @@ export default function OrdersPage() {
                     <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-1">Orders</h1>
                     <p className="text-sm text-muted-foreground font-medium">Manage and fulfill your customer orders efficiently.</p>
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <button onClick={handleExport} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
                         <Download className="size-4" />
                         Export CSV
                     </button>
-                    <button className="flex items-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-semibold text-foreground shadow-[0_0_20px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.4)] transition-all">
+                    <button className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-semibold text-foreground shadow-[0_0_20px_rgba(99,102,241,0.2)] hover:shadow-[0_0_25px_rgba(99,102,241,0.4)] transition-all">
                         Create Order <ArrowUpRight className="size-4" />
                     </button>
                 </div>
@@ -202,7 +202,7 @@ export default function OrdersPage() {
                             className="w-full h-10 pl-10 pr-4 rounded-xl bg-secondary/80 border border-border text-sm text-foreground placeholder:text-muted-foreground/60 outline-none focus:border-indigo-500/50 focus:bg-indigo-500/5 transition-all"
                         />
                     </div>
-                    <button className="flex items-center gap-2 px-4 py-2 h-10 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all shrink-0">
+                    <button className="flex items-center justify-center gap-2 px-4 py-2 h-10 w-full sm:w-auto rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all shrink-0">
                         <Filter className="size-4" />
                         Filters
                     </button>

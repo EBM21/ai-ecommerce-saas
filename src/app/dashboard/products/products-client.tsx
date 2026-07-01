@@ -93,12 +93,12 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                     <h1 className="text-4xl font-extrabold tracking-tight text-foreground mb-2">Inventory</h1>
                     <p className="text-muted-foreground font-medium">Manage your catalog and monitor AI-optimized assets.</p>
                 </div>
-                <div className="flex items-center gap-3 w-full sm:w-auto">
-                    <button onClick={handleExport} className="flex items-center gap-2 px-4 py-3 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full sm:w-auto">
+                    <button onClick={handleExport} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-3 rounded-xl bg-secondary/80 border border-border text-sm font-semibold text-foreground/90 hover:bg-secondary hover:text-foreground transition-all">
                         <Download className="size-4" /> Export CSV
                     </button>
-                    <Link href="/dashboard/products/new">
-                        <button className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-bold text-foreground shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all active:scale-95">
+                    <Link href="/dashboard/products/new" className="w-full sm:w-auto">
+                        <button className="w-full flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-indigo-500 to-violet-600 text-sm font-bold text-foreground shadow-lg shadow-indigo-500/20 hover:shadow-indigo-500/40 hover:-translate-y-0.5 transition-all active:scale-95">
                             <PlusCircle className="size-4" /> Create Product
                         </button>
                     </Link>
@@ -148,13 +148,13 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                             </CardDescription>
                         </div>
 
-                        <div className="flex items-center gap-4 flex-wrap w-full md:w-auto">
-                            <div className="flex items-center p-1 rounded-xl bg-secondary/50 border border-border/50">
+                        <div className="flex flex-col md:flex-row items-center gap-4 w-full md:w-auto">
+                            <div className="flex items-center p-1 rounded-xl bg-secondary/50 border border-border/50 overflow-x-auto w-full md:w-auto hide-scrollbar">
                                 {(["ALL", "ACTIVE", "DRAFT", "ARCHIVED"] as const).map(f => (
                                     <button
                                         key={f}
                                         onClick={() => setFilter(f)}
-                                        className={`px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all ${filter === f
+                                        className={`px-4 py-2 rounded-lg text-[11px] font-bold uppercase tracking-wide transition-all whitespace-nowrap ${filter === f
                                             ? "bg-indigo-600/20 text-indigo-300 border border-indigo-500/30"
                                             : "text-muted-foreground/60 hover:text-foreground/80 border border-transparent"
                                             }`}
@@ -290,7 +290,7 @@ export default function ProductsClient({ products = [], domain = "", currency = 
                                                         <p className="text-[13px] font-medium text-muted-foreground/60">{addedAt}</p>
                                                     </TableCell>
                                                     <TableCell className="px-8 py-4 text-right">
-                                                        <div className="flex items-center justify-end gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                        <div className="flex items-center justify-end gap-1 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
                                                             <a href={getStoreUrl(domain, `/product/${product.id}`)} target="_blank" rel="noopener noreferrer">
                                                                 <button className="p-2 rounded-lg bg-secondary/50 hover:bg-secondary text-muted-foreground hover:text-foreground transition-all">
                                                                     <Eye className="size-4" />

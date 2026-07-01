@@ -212,7 +212,7 @@ export default function PaymentsPage() {
                                         </div>
                                         <div className="relative aspect-[3/4] bg-black/5 flex items-center justify-center overflow-hidden">
                                             <img src={proof.screenshot} alt={`Proof ${proof.displayId}`} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-500" />
-                                            <a href={proof.screenshot} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-0 group-hover:opacity-100">
+                                            <a href={proof.screenshot} target="_blank" rel="noopener noreferrer" className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-all flex items-center justify-center opacity-100 md:opacity-0 group-hover:opacity-100">
                                                 <div className="px-4 py-2 bg-white text-black font-bold text-xs rounded-xl flex items-center gap-2 shadow-xl">
                                                     View Full Image <ExternalLink className="size-3" />
                                                 </div>

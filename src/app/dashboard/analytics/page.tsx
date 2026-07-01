@@ -70,11 +70,13 @@ export default function AnalyticsDashboard() {
                     <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">Revenue Analytics</h1>
                     <p className="text-muted-foreground font-medium">Tracking sales performance and AI-driven growth metrics.</p>
                 </div>
-                <button onClick={handleExport} className="flex items-center gap-2 px-4 py-2 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
-                    <Download className="size-3" /> Export Data
-                </button>
-                <div className="px-4 py-2 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground">
-                    Real-time Pipeline Active
+                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
+                    <button onClick={handleExport} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
+                        <Download className="size-3" /> Export Data
+                    </button>
+                    <div className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground text-center">
+                        Real-time Pipeline Active
+                    </div>
                 </div>
             </div>
 

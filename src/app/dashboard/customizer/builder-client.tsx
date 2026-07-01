@@ -414,7 +414,7 @@ function LayerItem({ block, isActive, onSelect, onDelete }: {
             </div>
             <span className="flex-1 text-[11px] font-semibold capitalize truncate">{block.type.replace(/-/g, ' ')}</span>
             <button onClick={e => { e.stopPropagation(); onDelete() }}
-                className="size-5 rounded-md flex items-center justify-center text-rose-500 opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 transition-all">
+                className="size-5 rounded-md flex items-center justify-center text-rose-500 opacity-100 md:opacity-0 group-hover:opacity-100 hover:bg-rose-500/10 transition-all">
                 <Trash2 className="size-2.5" />
             </button>
         </div>

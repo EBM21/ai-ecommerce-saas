@@ -554,6 +554,7 @@ export default function DashboardShell({ children, user, lowStockProducts = [] }
         className="page-wrap bg-background"
         style={{
           flex: 1,
+          minWidth: 0,
           minHeight: isCustomizer ? "100vh" : undefined,
           height: isCustomizer ? "100vh" : undefined,
           overflow: isCustomizer ? "hidden" : undefined,
@@ -573,7 +574,7 @@ export default function DashboardShell({ children, user, lowStockProducts = [] }
             <div className="fixed left-0 right-0 h-px bg-gradient-to-r from-transparent via-indigo-500/10 to-transparent pointer-events-none z-30 transition-all duration-300"
               style={{ top: showBanner ? 100 : 60, left: sideW }}
             />
-            <div className="p-7 md:p-10">
+            <div className="p-4 md:p-8 lg:p-10">
               {children}
             </div>
           </>

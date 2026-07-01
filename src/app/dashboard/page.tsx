@@ -4,6 +4,8 @@ import { createClient } from "@/utils/supabase/server"
 import prisma from "@/lib/prisma"
 import DashboardClient from "./dashboard-client"
 
+export const dynamic = 'force-dynamic'
+
 export default async function DashboardPage() {
     // ── Auth ──────────────────────────────────────────────────────────────────
     const supabase = await createClient()
@@ -38,6 +40,7 @@ export default async function DashboardPage() {
 
     // ── Parallel queries ──────────────────────────────────────────────────────
     const [
+      allOrders,
       ordersThisMonth,
       ordersLastMonth,
       recentOrders,
@@ -46,14 +49,19 @@ export default async function DashboardPage() {
       topProducts,
     ] = await Promise.all([
 
+      // All orders (for all-time totals)
+      prisma.order.findMany({
+        where: { storeId: store.id, status: { not: 'CANCELLED' } },
+      }),
+
       // Orders this month
       prisma.order.findMany({
-        where: { storeId: store.id, createdAt: { gte: startThisMonth }, status: { in: ['PAID', 'FULFILLED'] } },
+        where: { storeId: store.id, createdAt: { gte: startThisMonth }, status: { not: 'CANCELLED' } },
       }),
 
       // Orders last month
       prisma.order.findMany({
-        where: { storeId: store.id, createdAt: { gte: startLastMonth, lte: endLastMonth }, status: { in: ['PAID', 'FULFILLED'] } },
+        where: { storeId: store.id, createdAt: { gte: startLastMonth, lte: endLastMonth }, status: { not: 'CANCELLED' } },
       }),
 
       // Recent 5 orders with items + product name
@@ -80,18 +88,19 @@ export default async function DashboardPage() {
       // Top products by sales
       prisma.product.findMany({
         where: { storeId: store.id },
-        include: { orderItems: { where: { order: { status: { in: ['PAID', 'FULFILLED'] } } } } },
+        include: { orderItems: { where: { order: { status: { not: 'CANCELLED' } } } } },
         orderBy: { orderItems: { _count: "desc" } },
         take: 4,
       }),
     ])
 
     // ── Revenue calculations ──────────────────────────────────────────────────
+    const revAll = allOrders.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
     const revThis = ordersThisMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
     const revLast = ordersLastMonth.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
     const revDiff = revLast === 0 ? (revThis > 0 ? 100 : 0) : ((revThis - revLast) / revLast) * 100
     const ordDiff = ordersLastMonth.length === 0 ? (ordersThisMonth.length > 0 ? 100 : 0) : ((ordersThisMonth.length - ordersLastMonth.length) / ordersLastMonth.length) * 100
-    const conv = totalProducts === 0 ? 0 : (ordersThisMonth.length / totalProducts) * 100
+    const conv = totalProducts === 0 ? 0 : (allOrders.length / totalProducts) * 100
 
     // ── Monthly chart — last 12 months ────────────────────────────────────────
     const monthlyRaw = await Promise.all(
@@ -99,7 +108,7 @@ export default async function DashboardPage() {
         const start = new Date(now.getFullYear(), now.getMonth() - (11 - i), 1)
         const end = new Date(now.getFullYear(), now.getMonth() - (11 - i) + 1, 0)
         const rows = await prisma.order.findMany({
-          where: { storeId: store.id, createdAt: { gte: start, lte: end }, status: { in: ['PAID', 'FULFILLED'] } },
+          where: { storeId: store.id, createdAt: { gte: start, lte: end }, status: { not: 'CANCELLED' } },
         })
         return rows.reduce((s: number, o: any) => s + Number(o.totalAmount ?? 0), 0)
       })
@@ -139,13 +148,13 @@ export default async function DashboardPage() {
         storeName={store.name}
         stats={{
           revenue: {
-            value: formatMoneyNoDecimals(revThis),
-            change: `${revDiff >= 0 ? "+" : ""}${revDiff.toFixed(1)}%`,
+            value: formatMoneyNoDecimals(revAll),
+            change: `${revDiff >= 0 ? "+" : ""}${revDiff.toFixed(1)}% this month`,
             up: revDiff >= 0,
           },
           orders: {
-            value: ordersThisMonth.length.toLocaleString(),
-            change: `${ordDiff >= 0 ? "+" : ""}${ordDiff.toFixed(1)}%`,
+            value: allOrders.length.toLocaleString(),
+            change: `${ordDiff >= 0 ? "+" : ""}${ordDiff.toFixed(1)}% this month`,
             up: ordDiff >= 0,
           },
           products: {
@@ -155,7 +164,7 @@ export default async function DashboardPage() {
           },
           conversion: {
             value: `${conv.toFixed(2)}%`,
-            change: "this month",
+            change: "all time",
             up: true,
           },
         }}
