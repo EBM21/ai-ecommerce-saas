@@ -58,11 +58,17 @@ export default function OnboardingPage() {
     setError("")
 
     try {
-      await createStore({
+      const result = await createStore({
         name: storeName.trim(),
         subdomain: storeUrl.trim().toLowerCase().replace(/[^a-z0-9-]/g, "-"),
         themeConfig: { theme, currency, categories },
       })
+      
+      if (result?.error) {
+        setError(result.error)
+        setLoading(false)
+        return
+      }
     } catch (err) {
       console.error("Launch error:", err)
       const errMsg = err instanceof Error ? err.message : "Store creation failed. Please try again."

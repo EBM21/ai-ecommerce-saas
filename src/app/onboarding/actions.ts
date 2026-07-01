@@ -33,17 +33,22 @@ export async function createStore(data: {
 
   const validated = createStoreSchema.safeParse(data)
   if (!validated.success) {
-    throw new Error(validated.error.issues.map(issue => issue.message).join(', '))
+    return { error: validated.error.issues.map(issue => issue.message).join(', ') }
   }
 
   const { name, subdomain, themeConfig } = validated.data
 
-  // Ensure user row exists
-  await prisma.user.upsert({
-    where: { id: user.id },
-    update: { email: user.email! },
-    create: { id: user.id, email: user.email! },
-  })
+  // Ensure user row exists safely
+  try {
+    await prisma.user.upsert({
+      where: { id: user.id },
+      update: { email: user.email || `no-email-${user.id}@quadlix.com` },
+      create: { id: user.id, email: user.email || `no-email-${user.id}@quadlix.com` },
+    })
+  } catch (err: any) {
+    console.error("USER UPSERT ERROR:", err)
+    return { error: 'Failed to synchronize user account. Please contact support.' }
+  }
 
   // Calculate Trial End Date (Current Date + 14 Days)
   const trialEndsAt = new Date()
@@ -79,11 +84,12 @@ export async function createStore(data: {
         trialEndsAt
       },
     })
-  } catch (e) {
+  } catch (e: any) {
+    console.error("STORE CREATE ERROR:", e)
     if (e && typeof e === 'object' && 'code' in e && e.code === 'P2002') {
-      throw new Error('This URL is already taken. Please choose another.')
+      return { error: 'This URL is already taken. Please choose another.' }
     }
-    throw new Error('Failed to create store. Please try again.')
+    return { error: `Failed to create store: ${e?.message || 'Unknown database error'}` }
   }
 
   revalidatePath('/', 'layout')
