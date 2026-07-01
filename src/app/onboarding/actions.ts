@@ -40,10 +40,21 @@ export async function createStore(data: {
 
   // Ensure user row exists safely
   try {
+    const userEmail = user.email || `no-email-${user.id}@quadlix.com`
+    
+    // Fix for dev environments: If email exists but with a different ID (e.g. Supabase was reset but Prisma wasn't)
+    const existing = await prisma.user.findUnique({ where: { email: userEmail } })
+    if (existing && existing.id !== user.id) {
+      await prisma.user.update({
+        where: { id: existing.id },
+        data: { email: `archived-${Date.now()}-${existing.email}` }
+      })
+    }
+
     await prisma.user.upsert({
       where: { id: user.id },
-      update: { email: user.email || `no-email-${user.id}@quadlix.com` },
-      create: { id: user.id, email: user.email || `no-email-${user.id}@quadlix.com` },
+      update: { email: userEmail },
+      create: { id: user.id, email: userEmail },
     })
   } catch (err: any) {
     console.error("USER UPSERT ERROR:", err)
