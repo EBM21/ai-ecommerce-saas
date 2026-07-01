@@ -47,7 +47,7 @@ export async function createStore(data: {
     })
   } catch (err: any) {
     console.error("USER UPSERT ERROR:", err)
-    return { error: 'Failed to synchronize user account. Please contact support.' }
+    return { error: `Failed to synchronize user account: ${err?.message || err}` }
   }
 
   // Calculate Trial End Date (Current Date + 14 Days)
