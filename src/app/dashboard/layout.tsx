@@ -4,25 +4,26 @@ import prisma from "@/lib/prisma"
 import DashboardShell from "./dashboard-shell"
 
 export default async function DashboardLayout({ children }: { children: React.ReactNode }) {
+    // 1. Auth check
+    const supabase = await createClient()
+    const { data, error: authError } = await supabase.auth.getUser()
+
+    if (authError || !data.user) {
+        redirect("/login")
+    }
+
+    const user = data.user
+
+    // 2. Merchant check
+    const store = await prisma.store.findFirst({
+        where: { ownerId: user.id }
+    })
+
+    if (!store) {
+        redirect("/onboarding")
+    }
+
     try {
-        // 1. Auth check
-        const supabase = await createClient()
-        const { data, error: authError } = await supabase.auth.getUser()
-
-        if (authError || !data.user) {
-            return redirect("/login")
-        }
-
-        const user = data.user
-
-        // 2. Merchant check
-        const store = await prisma.store.findFirst({
-            where: { ownerId: user.id }
-        })
-
-        if (!store) {
-            return redirect("/onboarding")
-        }
 
         // 3. User is a merchant, show the shell
         const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
@@ -37,16 +38,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
         return <DashboardShell user={dbUser || undefined} lowStockProducts={lowStockProducts}>{children}</DashboardShell>
         
     } catch (error: any) {
-        // ── IMPORTANT: Bubble up Next.js control flow errors ──
-        if (
-            error?.digest?.includes('NEXT_REDIRECT') || 
-            error?.message?.includes('NEXT_REDIRECT') ||
-            error?.digest === 'DYNAMIC_SERVER_USAGE' ||
-            error?.message?.includes('Dynamic server usage')
-        ) {
-            throw error
-        }
-        
         console.error("CRITICAL: Dashboard Layout Failure", error)
         
         // Final fallback UI
