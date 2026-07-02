@@ -8,20 +8,24 @@ import {
     CalendarDays, ChevronDown, Info, Minus
 } from "lucide-react"
 import { getAnalyticsData } from "./action"
+import { DropdownMenu, DropdownMenuTrigger, DropdownMenuContent, DropdownMenuItem } from "@/components/ui/dropdown-menu"
+import { toast } from "sonner"
 
 export default function AnalyticsDashboard() {
     const [isLoading, setIsLoading] = useState(true)
     const [data, setData] = useState<any>(null)
     const [activeMetric, setActiveMetric] = useState<string>('sales')
+    const [dateRange, setDateRange] = useState<number>(30)
 
     useEffect(() => {
         async function loadAnalytics() {
-            const res = await getAnalyticsData()
+            setIsLoading(true)
+            const res = await getAnalyticsData(dateRange)
             if (res?.success) setData(res)
             setIsLoading(false)
         }
         loadAnalytics()
-    }, [])
+    }, [dateRange])
 
     const metrics = data?.metrics
 
@@ -105,13 +109,25 @@ export default function AnalyticsDashboard() {
             <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
                 <h1 className="text-2xl font-bold text-foreground tracking-tight">Analytics</h1>
                 <div className="flex flex-wrap items-center gap-2">
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">
-                        <CalendarDays className="size-4" />
-                        Last 30 days
-                    </button>
-                    <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">
+                    <DropdownMenu>
+                        <DropdownMenuTrigger className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground outline-none">
+                            <CalendarDays className="size-4" />
+                            Last {dateRange} days
+                            <ChevronDown className="size-3 ml-1" />
+                        </DropdownMenuTrigger>
+                        <DropdownMenuContent align="end" className="w-40">
+                            <DropdownMenuItem onClick={() => setDateRange(7)}>Last 7 days</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDateRange(30)}>Last 30 days</DropdownMenuItem>
+                            <DropdownMenuItem onClick={() => setDateRange(90)}>Last 90 days</DropdownMenuItem>
+                        </DropdownMenuContent>
+                    </DropdownMenu>
+
+                    <button 
+                        onClick={() => toast.info('Comparison is automatically set to the previous equivalent period.', { icon: <Info className="size-4 text-blue-500" /> })}
+                        className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground"
+                    >
                         Compare: Previous period
-                        <ChevronDown className="size-3" />
+                        <Info className="size-3 text-muted-foreground" />
                     </button>
                 </div>
             </div>

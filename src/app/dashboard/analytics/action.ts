@@ -6,7 +6,7 @@ import { GoogleGenerativeAI } from '@google/generative-ai'
 
 const genAI = new GoogleGenerativeAI(process.env.GEMINI_API_KEY || process.env.GOOGLE_GENERATIVE_AI_API_KEY || '')
 
-export async function getAnalyticsData() {
+export async function getAnalyticsData(days: number = 30) {
     try {
         const supabase = await createClient()
         const { data: { user } } = await supabase.auth.getUser()
@@ -35,14 +35,14 @@ export async function getAnalyticsData() {
 
         // Date ranges
         const now = new Date()
-        const thirtyDaysAgo = new Date(now)
-        thirtyDaysAgo.setDate(now.getDate() - 30)
+        const periodAgo = new Date(now)
+        periodAgo.setDate(now.getDate() - days)
         
-        const sixtyDaysAgo = new Date(now)
-        sixtyDaysAgo.setDate(now.getDate() - 60)
+        const previousPeriodAgo = new Date(now)
+        previousPeriodAgo.setDate(now.getDate() - (days * 2))
 
-        const currentPeriodOrders = orders.filter(o => new Date(o.createdAt) >= thirtyDaysAgo)
-        const previousPeriodOrders = orders.filter(o => new Date(o.createdAt) >= sixtyDaysAgo && new Date(o.createdAt) < thirtyDaysAgo)
+        const currentPeriodOrders = orders.filter(o => new Date(o.createdAt) >= periodAgo)
+        const previousPeriodOrders = orders.filter(o => new Date(o.createdAt) >= previousPeriodAgo && new Date(o.createdAt) < periodAgo)
 
         // Totals Current
         const currentRevenue = currentPeriodOrders.reduce((acc, o) => acc + Number(o.totalAmount), 0)
@@ -68,9 +68,9 @@ export async function getAnalyticsData() {
             return ((current - previous) / previous) * 100
         }
 
-        // Timeseries data for the last 30 days
+        // Timeseries data for the last 'days'
         const chartData = []
-        for (let i = 29; i >= 0; i--) {
+        for (let i = days - 1; i >= 0; i--) {
             const d = new Date()
             d.setDate(d.getDate() - i)
             const dateStr = d.toISOString().split('T')[0]
