@@ -68,7 +68,7 @@ export function CartDrawer({ domain, theme, baseUrl = "" }: { domain: string, th
                                 items.map(item => (
                                     <div key={item.id} className="flex gap-4 p-4 rounded-2xl" style={{ backgroundColor: cardBg, border: `1px solid ${borderColor}` }}>
                                         <div className="size-20 shrink-0 rounded-xl overflow-hidden bg-black/5 dark:bg-white/5">
-                                            {/* eslint-disable-next-line @next/next/no-img-element */}
+                                            { }
                                             <img src={item.image} alt={item.title} className="w-full h-full object-cover" />
                                         </div>
                                         <div className="flex-1 flex flex-col justify-between">

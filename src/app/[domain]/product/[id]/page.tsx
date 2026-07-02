@@ -132,7 +132,7 @@ export default async function ProductDetailPage({
           }]
       }
 
-      let finalBlocks = [...localBlocks]
+      const finalBlocks = [...localBlocks]
       if (!finalBlocks.some(b => b.type.startsWith('header-'))) {
           const h = homeBlocks.find((b: any) => b.type.startsWith('header-'))
           if (h) finalBlocks.unshift(h)

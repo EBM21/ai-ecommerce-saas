@@ -18,8 +18,6 @@ export default async function DashboardPage() {
     })
     if (!store) redirect("/onboarding")
 
-  try {
-
     // ── Date ranges ───────────────────────────────────────────────────────────
     let currency = "USD"
     if (store.themeConfig) {
@@ -173,10 +171,6 @@ export default async function DashboardPage() {
         topProducts={formattedTop}
       />
     )
-  } catch (error) {
-    console.error("DASHBOARD_PAGE_ERROR:", error);
-    throw error;
-  }
 }
 
 // ── Helper ────────────────────────────────────────────────────────────────

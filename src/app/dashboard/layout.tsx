@@ -23,23 +23,26 @@ export default async function DashboardLayout({ children }: { children: React.Re
         redirect("/onboarding")
     }
 
-    try {
+    let dbUser = null
+    let lowStockProducts: any[] = []
+    let hasError = false
 
+    try {
         // 3. User is a merchant, show the shell
-        const dbUser = await prisma.user.findUnique({ where: { id: user.id } })
+        dbUser = await prisma.user.findUnique({ where: { id: user.id } })
 
         // 4. Notifications (Low Stock)
-        const lowStockProducts = await prisma.product.findMany({
+        lowStockProducts = await prisma.product.findMany({
             where: { storeId: store.id, inventoryCount: { lt: 10 } },
             select: { id: true, title: true, inventoryCount: true },
             orderBy: { inventoryCount: 'asc' }
         })
-
-        return <DashboardShell user={dbUser || undefined} lowStockProducts={lowStockProducts}>{children}</DashboardShell>
-        
     } catch (error: any) {
         console.error("CRITICAL: Dashboard Layout Failure", error)
-        
+        hasError = true
+    }
+
+    if (hasError) {
         // Final fallback UI
         return (
             <div className="h-screen w-full flex items-center justify-center bg-background text-foreground p-6">
@@ -61,4 +64,6 @@ export default async function DashboardLayout({ children }: { children: React.Re
             </div>
         )
     }
+
+    return <DashboardShell user={dbUser || undefined} lowStockProducts={lowStockProducts}>{children}</DashboardShell>
 }

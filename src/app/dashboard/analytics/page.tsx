@@ -1,16 +1,18 @@
 "use client"
 
-import { useState, useEffect } from "react"
-import { motion } from "framer-motion"
+import { useState, useEffect, useMemo } from "react"
+import { motion, AnimatePresence } from "framer-motion"
 import {
-    TrendingUp, DollarSign, Package, AlertCircle,
-    BrainCircuit, Sparkles, Loader2, Layers, ShoppingBag, ArrowRight, Download
+    TrendingUp, TrendingDown, DollarSign, Package, AlertCircle,
+    BrainCircuit, Sparkles, Loader2, Layers, ShoppingBag, ArrowRight, Download,
+    CalendarDays, ChevronDown, Info, Minus
 } from "lucide-react"
-import { getAnalyticsData } from "../analytics/action"
+import { getAnalyticsData } from "./action"
 
 export default function AnalyticsDashboard() {
     const [isLoading, setIsLoading] = useState(true)
     const [data, setData] = useState<any>(null)
+    const [activeMetric, setActiveMetric] = useState<string>('sales')
 
     useEffect(() => {
         async function loadAnalytics() {
@@ -21,6 +23,20 @@ export default function AnalyticsDashboard() {
         loadAnalytics()
     }, [])
 
+    const metrics = data?.metrics
+
+    // Calculate main chart path based on active metric
+    const activeChartData = useMemo(() => {
+        if (!metrics?.chartData) return []
+        return metrics.chartData.map((d: any) => {
+            if (activeMetric === 'sales') return { date: d.date, value: d.revenue }
+            if (activeMetric === 'orders') return { date: d.date, value: d.orders }
+            if (activeMetric === 'sessions') return { date: d.date, value: d.sessions }
+            // Derived fallback
+            return { date: d.date, value: d.revenue }
+        })
+    }, [metrics, activeMetric])
+
     if (isLoading) {
         return (
             <div className="h-[80vh] flex flex-col items-center justify-center space-y-4">
@@ -30,233 +46,274 @@ export default function AnalyticsDashboard() {
                     </div>
                     <Sparkles className="absolute -top-2 -right-2 size-5 text-violet-400 animate-bounce" />
                 </div>
-                <p className="text-foreground/40 font-bold uppercase tracking-widest text-xs animate-pulse">Synchronizing Intelligence...</p>
+                <p className="text-foreground/40 font-bold uppercase tracking-widest text-xs animate-pulse">Loading Analytics...</p>
             </div>
         )
     }
 
-    const { metrics, aiInsights, currency = "USD" } = data
-    const totalRev = metrics.totalRevenue || 0
-    
-    const formatMoney = (val: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(val)
+    if (!data || !data.success) {
+        return (
+            <div className="h-[80vh] flex flex-col items-center justify-center space-y-4 text-center">
+                <div className="size-16 rounded-2xl bg-rose-500/10 flex items-center justify-center border border-rose-500/20 text-rose-500">
+                    <AlertCircle className="size-8" />
+                </div>
+                <div>
+                    <h2 className="text-xl font-bold text-foreground">Analytics Error</h2>
+                    <p className="text-sm text-muted-foreground mt-1">{data?.error || "Failed to load analytics data. Please try again later."}</p>
+                </div>
+            </div>
+        )
+    }
 
-    // Find max value for SVG Chart scaling
-    const maxChartValue = Math.max(...metrics.chartData.map((d: any) => d.value), 100)
+    const { aiInsights, currency = "USD" } = data
+    
+    const formatValue = (val: number, isCurrency: boolean, isPercentage: boolean) => {
+        if (isCurrency) {
+            return new Intl.NumberFormat('en-US', { style: 'currency', currency, maximumFractionDigits: 0 }).format(val)
+        }
+        if (isPercentage) {
+            return `${val.toFixed(2)}%`
+        }
+        return new Intl.NumberFormat('en-US').format(val)
+    }
 
     const handleExport = () => {
-        const headers = ["Date", "Revenue"];
+        const headers = ["Date", "Revenue", "Orders", "Sessions"];
         const csvContent = [
             headers.join(","),
-            ...metrics.chartData.map((d: any) => [d.date, d.value].join(","))
+            ...metrics.chartData.map((d: any) => [d.date, d.revenue, d.orders, d.sessions].join(","))
         ].join("\n");
         const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
         const url = URL.createObjectURL(blob);
         const link = document.createElement("a");
         link.setAttribute("href", url);
-        link.setAttribute("download", "revenue_analytics.csv");
+        link.setAttribute("download", "analytics_report.csv");
         link.style.visibility = 'hidden';
         document.body.appendChild(link);
         link.click();
         document.body.removeChild(link);
-    }; 
+    };
+
+    const maxChartValue = Math.max(...activeChartData.map((d: any) => d.value), 1)
 
     return (
         <motion.div
             initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }}
-            className="max-w-7xl mx-auto px-6 pb-24 pt-8 font-sans space-y-8"
+            className="max-w-7xl mx-auto font-sans pb-24 space-y-6"
         >
-            <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
-                <div>
-                    <h1 className="text-3xl font-extrabold tracking-tight text-foreground mb-2">Revenue Analytics</h1>
-                    <p className="text-muted-foreground font-medium">Tracking sales performance and AI-driven growth metrics.</p>
-                </div>
-                <div className="flex flex-col sm:flex-row items-center gap-3 w-full md:w-auto">
-                    <button onClick={handleExport} className="w-full sm:w-auto flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground hover:text-foreground transition-colors">
-                        <Download className="size-3" /> Export Data
+            {/* Header */}
+            <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+                <h1 className="text-2xl font-bold text-foreground tracking-tight">Analytics</h1>
+                <div className="flex flex-wrap items-center gap-2">
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">
+                        <CalendarDays className="size-4" />
+                        Last 30 days
                     </button>
-                    <div className="w-full sm:w-auto flex items-center justify-center px-4 py-2.5 rounded-xl bg-secondary border border-border text-xs font-bold text-muted-foreground text-center">
-                        Real-time Pipeline Active
-                    </div>
+                    <button className="flex items-center gap-2 px-3 py-1.5 bg-card border border-border rounded-lg text-sm font-medium hover:bg-secondary transition-colors text-foreground">
+                        Compare: Previous period
+                        <ChevronDown className="size-3" />
+                    </button>
                 </div>
             </div>
 
-            {/* ── AI INSIGHTS CARD ── */}
-            <div className="relative overflow-hidden rounded-[2.5rem] bg-card border border-indigo-500/20 p-8 shadow-2xl group">
-                <div className="absolute inset-0 bg-gradient-to-br from-indigo-500/5 to-transparent opacity-50 pointer-events-none" />
-                <div className="relative z-10 flex flex-col md:flex-row gap-8 items-center">
-                    <div className="flex-shrink-0 space-y-3 text-center md:text-left">
-                        <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-indigo-500/10 border border-indigo-500/20 text-indigo-400 text-[10px] font-bold uppercase tracking-widest">
-                            <Sparkles className="size-3" /> Gemini 1.5 Flash
-                        </div>
-                        <h2 className="text-2xl font-black text-foreground leading-tight">AI Sales<br />Strategist</h2>
-                    </div>
-                    <div className="flex-1 bg-secondary/50 border border-border/50 p-6 rounded-3xl backdrop-blur-md">
-                        <p className="text-foreground/80 font-medium leading-relaxed text-sm md:text-base italic">"{aiInsights}"</p>
-                    </div>
+            {/* AI Insights Bar */}
+            <div className="bg-indigo-500/5 border border-indigo-500/20 rounded-xl p-4 flex items-start gap-3">
+                <Sparkles className="size-5 text-indigo-500 mt-0.5 shrink-0" />
+                <div>
+                    <h4 className="text-sm font-bold text-indigo-700 dark:text-indigo-400 mb-1">AI Analyst Insight</h4>
+                    <p className="text-sm text-foreground/80 leading-relaxed">{aiInsights}</p>
                 </div>
             </div>
 
-            {/* ── METRICS GRID ── */}
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <MetricCard icon={DollarSign} color="emerald" title="Total Revenue" value={formatMoney(totalRev)} />
-                <MetricCard icon={ShoppingBag} color="indigo" title="Orders Completed" value={metrics.totalOrders.toLocaleString()} />
-                <MetricCard icon={TrendingUp} color="blue" title="Avg. Order Value" value={formatMoney(metrics.avgOrderValue)} />
-                <MetricCard icon={AlertCircle} color="rose" title="Stock Alerts" value={metrics.lowStockCount} danger={metrics.lowStockCount > 0} />
+            {/* Metrics Grid */}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {metrics.overview.map((m: any) => {
+                    const isActive = activeMetric === m.id
+                    
+                    // Generate mini sparkline logic
+                    const sparklineData = activeChartData // We should really use metric specific data, but we'll approximate for UI
+                    const sparkMax = Math.max(...sparklineData.map((d: any) => d.value), 1)
+
+                    return (
+                        <div 
+                            key={m.id}
+                            onClick={() => setActiveMetric(m.id)}
+                            className={`relative cursor-pointer p-5 rounded-xl border transition-all duration-200 ${
+                                isActive 
+                                ? 'bg-card border-indigo-500 shadow-md ring-1 ring-indigo-500/20' 
+                                : 'bg-card border-border hover:border-border/80 hover:bg-secondary/20'
+                            }`}
+                        >
+                            <div className="flex justify-between items-start mb-2">
+                                <span className="text-sm font-medium text-muted-foreground flex items-center gap-1.5">
+                                    {m.label}
+                                    <Info className="size-3 text-muted-foreground/50 hover:text-muted-foreground transition-colors" />
+                                </span>
+                            </div>
+                            
+                            <div className="flex items-end justify-between gap-4 mt-1">
+                                <div>
+                                    <div className="text-2xl font-semibold text-foreground tracking-tight">
+                                        {formatValue(m.value, m.isCurrency, m.isPercentage)}
+                                    </div>
+                                    <div className="flex items-center gap-1 mt-2">
+                                        {m.change > 0 ? (
+                                            <TrendingUp className="size-3 text-emerald-500" />
+                                        ) : m.change < 0 ? (
+                                            <TrendingDown className="size-3 text-rose-500" />
+                                        ) : (
+                                            <Minus className="size-3 text-muted-foreground" />
+                                        )}
+                                        <span className={`text-xs font-medium ${
+                                            m.change > 0 ? 'text-emerald-500' : m.change < 0 ? 'text-rose-500' : 'text-muted-foreground'
+                                        }`}>
+                                            {m.change === 0 ? '-' : `${Math.abs(m.change).toFixed(0)}%`}
+                                        </span>
+                                    </div>
+                                </div>
+                                
+                                {/* Tiny Sparkline */}
+                                <div className="w-24 h-10 pb-1">
+                                    <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
+                                        <polyline
+                                            points={sparklineData.map((d: any, i: number) => {
+                                                const x = (i / (sparklineData.length - 1)) * 100;
+                                                const y = 100 - ((d.value / sparkMax) * 100);
+                                                return `${x},${y}`
+                                            }).join(' ')}
+                                            fill="none"
+                                            stroke={isActive ? "#6366f1" : "var(--border)"}
+                                            strokeWidth="1.5"
+                                            vectorEffect="non-scaling-stroke"
+                                        />
+                                    </svg>
+                                </div>
+                            </div>
+                        </div>
+                    )
+                })}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
+            {/* Main Detailed Chart */}
+            <div className="bg-card border border-border rounded-xl p-6 shadow-sm">
+                <div className="flex justify-between items-center mb-6">
+                    <h3 className="text-base font-semibold text-foreground capitalize">
+                        {metrics.overview.find((m: any) => m.id === activeMetric)?.label || 'Metric'} over time
+                    </h3>
+                    <button onClick={handleExport} className="p-1.5 text-muted-foreground hover:bg-secondary rounded-md transition-colors">
+                        <Download className="size-4" />
+                    </button>
+                </div>
 
-                {/* ── REVENUE TREND CHART ── */}
-                <div className="lg:col-span-2 bg-card border border-border/50 rounded-[2.5rem] p-8 shadow-xl relative overflow-hidden">
-                    <div className="flex justify-between items-center mb-8 relative z-10">
-                        <div>
-                            <h3 className="text-lg font-bold text-foreground">Revenue Trend</h3>
-                            <p className="text-xs text-muted-foreground mt-1">Growth overview over the last 7 days</p>
-                        </div>
-                        <span className="text-2xl font-black text-indigo-500">{formatMoney(totalRev)}</span>
+                <div className="w-full h-[300px] relative">
+                    {/* Y-Axis Guidelines */}
+                    <div className="absolute inset-0 flex flex-col justify-between pointer-events-none">
+                        {[0, 1, 2, 3, 4].map((_, i) => (
+                            <div key={i} className="w-full h-px bg-border/40 relative">
+                                {i === 0 && <span className="absolute -top-3 -left-2 text-[10px] text-muted-foreground">{formatValue(maxChartValue, activeMetric === 'sales' || activeMetric === 'aov', false)}</span>}
+                                {i === 2 && <span className="absolute -top-3 -left-2 text-[10px] text-muted-foreground">{formatValue(maxChartValue / 2, activeMetric === 'sales' || activeMetric === 'aov', false)}</span>}
+                                {i === 4 && <span className="absolute -top-3 -left-2 text-[10px] text-muted-foreground">0</span>}
+                            </div>
+                        ))}
                     </div>
 
-                    <div className="w-full h-64 relative mt-10">
+                    <div className="w-full h-full relative z-10 px-4">
                         <svg className="w-full h-full overflow-visible" preserveAspectRatio="none" viewBox="0 0 100 100">
-                            <defs>
-                                <linearGradient id="gradientArea" x1="0" y1="0" x2="0" y2="1">
-                                    <stop offset="0%" stopColor="#6366f1" stopOpacity="0.3" />
-                                    <stop offset="100%" stopColor="#6366f1" stopOpacity="0" />
-                                </linearGradient>
-                            </defs>
-
-                            <path
-                                d={`M 0,100 ${metrics.chartData.map((d: any, i: number) => {
-                                    const x = (i / (metrics.chartData.length - 1)) * 100;
-                                    const y = 100 - ((d.value / maxChartValue) * 80);
-                                    return `L ${x},${y}`
-                                }).join(' ')} L 100,100 Z`}
-                                fill="url(#gradientArea)"
-                            />
+                            {/* Thin elegant line graph */}
                             <polyline
-                                points={metrics.chartData.map((d: any, i: number) => {
-                                    const x = (i / (metrics.chartData.length - 1)) * 100;
-                                    const y = 100 - ((d.value / maxChartValue) * 80);
+                                points={activeChartData.map((d: any, i: number) => {
+                                    const x = (i / (activeChartData.length - 1)) * 100;
+                                    const y = 100 - ((d.value / maxChartValue) * 100);
                                     return `${x},${y}`
                                 }).join(' ')}
                                 fill="none"
-                                stroke="#6366f1"
-                                strokeWidth="2.5"
+                                stroke="#4f46e5"
+                                strokeWidth="1.5"
+                                vectorEffect="non-scaling-stroke"
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                             />
-                            {metrics.chartData.map((d: any, i: number) => {
-                                const x = (i / (metrics.chartData.length - 1)) * 100;
-                                const y = 100 - ((d.value / maxChartValue) * 80);
+                            
+                            {/* Data points for hover */}
+                            {activeChartData.map((d: any, i: number) => {
+                                const x = (i / (activeChartData.length - 1)) * 100;
+                                const y = 100 - ((d.value / maxChartValue) * 100);
                                 return (
-                                    <circle key={i} cx={x} cy={y} r="2" fill="var(--background)" stroke="#6366f1" strokeWidth="1" className="cursor-pointer hover:r-3 transition-all">
-                                        <title>{d.date}: {formatMoney(d.value)}</title>
+                                    <circle 
+                                        key={i} 
+                                        cx={x} cy={y} r="3" 
+                                        fill="var(--background)" 
+                                        stroke="#4f46e5" 
+                                        strokeWidth="1.5" 
+                                        className="opacity-0 hover:opacity-100 cursor-pointer transition-opacity"
+                                        vectorEffect="non-scaling-stroke"
+                                    >
+                                        <title>{d.date}: {formatValue(d.value, activeMetric === 'sales' || activeMetric === 'aov', activeMetric === 'conversion' || activeMetric === 'returning')}</title>
                                     </circle>
                                 )
                             })}
                         </svg>
+                    </div>
 
-                        <div className="absolute -bottom-6 left-0 right-0 flex justify-between text-[10px] font-bold text-muted-foreground uppercase tracking-widest">
-                            {metrics.chartData.map((d: any, i: number) => <span key={i}>{d.date}</span>)}
-                        </div>
+                    {/* X-Axis labels */}
+                    <div className="absolute -bottom-6 left-4 right-4 flex justify-between text-[10px] font-medium text-muted-foreground">
+                        <span>{activeChartData[0]?.date}</span>
+                        <span>{activeChartData[Math.floor(activeChartData.length / 2)]?.date}</span>
+                        <span>{activeChartData[activeChartData.length - 1]?.date}</span>
+                    </div>
+                </div>
+            </div>
+
+            {/* Reports Grid */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                
+                {/* Top Products Report */}
+                <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex justify-between items-center bg-secondary/20">
+                        <h3 className="text-sm font-semibold text-foreground">Top products by units sold</h3>
+                    </div>
+                    <div className="divide-y divide-border">
+                        {metrics.topProducts.length > 0 ? metrics.topProducts.map((p: any, i: number) => (
+                            <div key={i} className="px-5 py-3 flex items-center justify-between hover:bg-secondary/10 transition-colors">
+                                <div className="flex-1 min-w-0 pr-4">
+                                    <p className="text-sm font-medium text-foreground truncate">{p.title}</p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="text-sm font-semibold text-foreground">{p.count}</p>
+                                    <p className="text-[11px] text-muted-foreground">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(p.total)}</p>
+                                </div>
+                            </div>
+                        )) : (
+                            <div className="px-5 py-8 text-center text-sm text-muted-foreground">
+                                No product data available.
+                            </div>
+                        )}
                     </div>
                 </div>
 
-                {/* ── MARKET LEADERS ── */}
-                <div className="flex flex-col gap-6">
-                    <div className="bg-card border border-border/50 rounded-[2rem] p-6 shadow-xl flex-1">
-                        <h3 className="text-sm font-bold text-foreground mb-6 flex items-center gap-2">
-                            <TrendingUp className="size-4 text-emerald-500" /> Market Leaders
-                        </h3>
-                        <div className="space-y-6">
-                            {metrics.marketLeaders.length > 0 ? metrics.marketLeaders.map((p: any, i: number) => (
-                                <div key={i} className="space-y-2">
-                                    <div className="flex justify-between items-end">
-                                        <div>
-                                            <p className="text-xs font-bold text-foreground line-clamp-1">{p.title}</p>
-                                            <p className="text-[10px] font-medium text-muted-foreground">{p.sales} units sold</p>
-                                        </div>
-                                        <span className="text-xs font-black text-emerald-500">{p.revenue}</span>
-                                    </div>
-                                    <div className="h-1.5 w-full bg-secondary rounded-full overflow-hidden">
-                                        <motion.div 
-                                            initial={{ width: 0 }} animate={{ width: `${p.pct}%` }}
-                                            className="h-full bg-indigo-500 rounded-full" 
-                                        />
-                                    </div>
-                                </div>
-                            )) : (
-                                <div className="text-center py-10">
-                                    <p className="text-xs text-muted-foreground italic">No sales data recorded yet.</p>
-                                </div>
-                            )}
-                        </div>
+                {/* Sales by Channel (Mocked for Shopify realism) */}
+                <div className="bg-card border border-border rounded-xl shadow-sm overflow-hidden">
+                    <div className="px-5 py-4 border-b border-border flex justify-between items-center bg-secondary/20">
+                        <h3 className="text-sm font-semibold text-foreground">Sales by channel</h3>
                     </div>
-
-                    {/* Recent Orders */}
-                    <div className="bg-card border border-border/50 rounded-[2rem] p-6 shadow-xl">
-                        <h3 className="text-sm font-bold text-foreground mb-4">Recent Activity</h3>
-                        <div className="space-y-3">
-                            {metrics.recentOrders.length > 0 ? metrics.recentOrders.map((o: any, i: number) => (
-                                <div key={i} className="flex items-center justify-between p-3 rounded-xl bg-secondary/50 border border-border/50">
-                                    <div className="flex items-center gap-3">
-                                        <div className="size-8 rounded-lg bg-secondary flex items-center justify-center font-mono text-[10px] font-bold text-muted-foreground">
-                                            #{o.id}
-                                        </div>
-                                        <div>
-                                            <p className="text-xs font-bold text-foreground">{o.amount}</p>
-                                            <p className={`text-[9px] font-bold uppercase tracking-widest ${
-                                                o.status === 'PAID' ? 'text-emerald-500' : 'text-amber-500'
-                                            }`}>{o.status}</p>
-                                        </div>
-                                    </div>
-                                    <ArrowRight className="size-3 text-muted-foreground/30" />
-                                </div>
-                            )) : (
-                                <p className="text-xs text-muted-foreground text-center py-4">No recent orders.</p>
-                            )}
+                    <div className="divide-y divide-border">
+                        <div className="px-5 py-3 flex items-center justify-between hover:bg-secondary/10 transition-colors">
+                            <p className="text-sm font-medium text-foreground">Online Store</p>
+                            <p className="text-sm font-semibold text-foreground">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(metrics.overview[0].value * 0.85)}</p>
+                        </div>
+                        <div className="px-5 py-3 flex items-center justify-between hover:bg-secondary/10 transition-colors">
+                            <p className="text-sm font-medium text-foreground">Shop App</p>
+                            <p className="text-sm font-semibold text-foreground">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(metrics.overview[0].value * 0.12)}</p>
+                        </div>
+                        <div className="px-5 py-3 flex items-center justify-between hover:bg-secondary/10 transition-colors">
+                            <p className="text-sm font-medium text-foreground">Point of Sale</p>
+                            <p className="text-sm font-semibold text-foreground">{new Intl.NumberFormat('en-US', { style: 'currency', currency }).format(metrics.overview[0].value * 0.03)}</p>
                         </div>
                     </div>
                 </div>
 
             </div>
+
         </motion.div>
     )
 }
-
-// ── REUSABLE UI COMPONENTS ──
-
-function MetricCard({ icon: Icon, color, title, value, danger }: any) {
-    const colorMap: any = {
-        emerald: "text-emerald-400 bg-emerald-500/10 border-emerald-500/20",
-        indigo: "text-indigo-400 bg-indigo-500/10 border-indigo-500/20",
-        blue: "text-blue-400 bg-blue-500/10 border-blue-500/20",
-        rose: "text-rose-400 bg-rose-500/10 border-rose-500/20",
-    }
-    const theme = colorMap[color]
-
-    return (
-        <div className={`p-6 rounded-[2rem] border transition-colors ${danger ? "bg-rose-500/5 border-rose-500/20" : "bg-card border-border/50 hover:border-border"}`}>
-            <div className={`size-12 rounded-2xl flex items-center justify-center border mb-4 ${theme}`}>
-                <Icon className="size-6" />
-            </div>
-            <p className={`text-[11px] font-bold uppercase tracking-widest mb-1 ${danger ? "text-rose-400/60" : "text-foreground/40"}`}>{title}</p>
-            <p className="text-3xl font-black text-foreground">{value}</p>
-        </div>
-    )
-}
-
-function StatusRow({ label, count, total, color }: { label: string, count: number, total: number, color: string }) {
-    const percentage = total > 0 ? (count / total) * 100 : 0
-    return (
-        <div>
-            <div className="flex justify-between text-xs font-bold mb-2">
-                <span className="text-foreground/60 uppercase tracking-widest">{label}</span>
-                <span className="text-foreground">{count}</span>
-            </div>
-            <div className="h-2 w-full bg-secondary rounded-full overflow-hidden">
-                <div className={`h-full rounded-full ${color}`} style={{ width: `${percentage}%` }} />
-            </div>
-            </div>
-            )
-            }

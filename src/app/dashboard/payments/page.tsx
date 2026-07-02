@@ -31,7 +31,7 @@ export default function PaymentsPage() {
         loadData()
     }, [])
 
-    const loadData = async () => {
+    async function loadData() {
         setIsLoading(true)
         const res = await getPaymentSettings()
         if (res.success) {

@@ -65,7 +65,7 @@ export default function CheckoutClient({ storeId, domain, theme, user, baseUrl, 
         const address = formData.get("address") as string
         const phone = formData.get("phone") as string
 
-        let newErrors: Record<string, string> = {}
+        const newErrors: Record<string, string> = {}
         if (!name || name.trim().length < 2) newErrors.name = "Name is required"
         if (!email || !/^\S+@\S+\.\S+$/.test(email)) newErrors.email = "Valid email is required"
         if (!phone || phone.trim().length < 5) newErrors.phone = "Valid phone number is required"

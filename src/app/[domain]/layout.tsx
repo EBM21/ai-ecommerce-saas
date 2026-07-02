@@ -72,7 +72,7 @@ export default async function StoreLayout({
                 style={{
                     backgroundColor: theme?.styles?.bgColor || '#ffffff',
                     color: theme?.styles?.textColor || '#000000',
-                    // @ts-ignore
+                    // @ts-expect-error - theme variables are dynamic
                     '--background': theme?.styles?.bgColor || '#ffffff',
                     '--foreground': theme?.styles?.textColor || '#000000',
                     '--card': theme?.styles?.cardBg || 'rgba(255,255,255,0.03)',

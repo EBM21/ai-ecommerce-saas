@@ -37,7 +37,7 @@ export default function NewProductPage() {
 }
 
 function NewProductContent() {
-  // @ts-ignore
+  // @ts-expect-error - external lib
   const [state, formAction, pending] = useActionState(createProduct, null)
   const searchParams = useSearchParams()
 

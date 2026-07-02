@@ -1432,7 +1432,7 @@ export default function VisualBuilder({
         const hasHeader = localBlocks.some(b => b.type.startsWith('header-'))
         const hasFooter = localBlocks.some(b => b.type.startsWith('footer-'))
 
-        let finalBlocks = [...localBlocks]
+        const finalBlocks = [...localBlocks]
         if (globalHeader && !hasHeader) finalBlocks.unshift(globalHeader)
         if (globalFooter && !hasFooter) finalBlocks.push(globalFooter)
 

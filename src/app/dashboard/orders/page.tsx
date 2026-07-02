@@ -130,30 +130,7 @@ export default function OrdersPage() {
         order.customerEmail.toLowerCase().includes(searchQuery.toLowerCase())
     )
 
-    const StatusBadge = ({ status }: { status: string }) => {
-        const styles: Record<string, string> = {
-            FULFILLED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
-            PAID: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
-            PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
-            CANCELLED: "bg-rose-500/10 text-rose-400 border-rose-500/20",
-        }
 
-        const Icons: Record<string, any> = {
-            FULFILLED: CheckCircle2,
-            PAID: Truck,
-            PENDING: Clock,
-            CANCELLED: XCircle,
-        }
-
-        const Icon = Icons[status] || Clock
-
-        return (
-            <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider border ${styles[status] || styles.PENDING}`}>
-                <Icon className="size-3" />
-                {status}
-            </div>
-        )
-    }
 
     return (
         <div className="w-full space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-700">
@@ -438,6 +415,31 @@ export default function OrdersPage() {
                     )}
                 </SheetContent>
             </Sheet>
+        </div>
+    )
+}
+
+const StatusBadge = ({ status }: { status: string }) => {
+    const styles: Record<string, string> = {
+        FULFILLED: "bg-emerald-500/10 text-emerald-400 border-emerald-500/20",
+        PAID: "bg-indigo-500/10 text-indigo-400 border-indigo-500/20",
+        PENDING: "bg-amber-500/10 text-amber-400 border-amber-500/20",
+        CANCELLED: "bg-rose-500/10 text-rose-400 border-rose-500/20",
+    }
+
+    const Icons: Record<string, any> = {
+        FULFILLED: CheckCircle2,
+        PAID: Truck,
+        PENDING: Clock,
+        CANCELLED: XCircle,
+    }
+
+    const Icon = Icons[status] || Clock
+
+    return (
+        <div className={`inline-flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-semibold uppercase tracking-wider border ${styles[status] || styles.PENDING}`}>
+            <Icon className="size-3" />
+            {status}
         </div>
     )
 }

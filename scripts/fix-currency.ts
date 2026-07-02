@@ -4,7 +4,7 @@ async function main() {
     const stores = await prisma.store.findMany()
     for (const store of stores) {
         if (store.themeConfig) {
-            let config: any = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
+            const config: any = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
             
             // Fix currency
             if (!config.branding) config.branding = {}

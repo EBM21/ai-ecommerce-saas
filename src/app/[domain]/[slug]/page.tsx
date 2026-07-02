@@ -115,7 +115,7 @@ export default async function DynamicStorePage({
         const globalHeader = allBlocks.find((b: any) => b.type?.startsWith('header-'))
         const globalFooter = allBlocks.find((b: any) => b.type?.startsWith('footer-'))
         
-        let finalBlocks = [...slugBlocks]
+        const finalBlocks = [...slugBlocks]
         if (globalHeader && !finalBlocks.some(b => b.type.startsWith('header-'))) {
             finalBlocks.unshift(globalHeader)
         }

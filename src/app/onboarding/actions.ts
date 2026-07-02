@@ -91,7 +91,7 @@ export async function createStore(data: {
         ownerId: user.id,
         name,
         subdomain,
-        themeConfig: finalThemeConfig as Prisma.InputJsonValue,
+        themeConfig: finalThemeConfig as unknown as Prisma.InputJsonObject,
         trialEndsAt
       },
     })

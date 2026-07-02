@@ -120,9 +120,9 @@ export async function updateProduct(id: string, data: any) {
     const { data: { user } } = await supabase.auth.getUser()
     if (!user) return { success: false, error: 'Unauthorized' }
 
-    let imagesData = typeof data.images === 'string' ? JSON.parse(data.images) : data.images
+    const imagesData = typeof data.images === 'string' ? JSON.parse(data.images) : data.images
     let variantsData = typeof data.variants === 'string' ? JSON.parse(data.variants) : data.variants
-    let categoriesData = typeof data.categories === 'string' ? JSON.parse(data.categories) : data.categories
+    const categoriesData = typeof data.categories === 'string' ? JSON.parse(data.categories) : data.categories
 
     // Pre-process variants to ensure price and inventory are numbers before zod validation
     if (Array.isArray(variantsData)) {

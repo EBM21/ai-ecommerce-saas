@@ -45,7 +45,7 @@ export default async function CheckoutPage({ params }: { params: Promise<{ domai
             }]
         }
 
-        let finalBlocks = [...localBlocks]
+        const finalBlocks = [...localBlocks]
         if (!finalBlocks.some(b => b.type.startsWith('header-'))) {
             const h = homeBlocks.find((b: any) => b.type.startsWith('header-'))
             if (h) finalBlocks.unshift(h)

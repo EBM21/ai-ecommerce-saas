@@ -38,7 +38,7 @@ export async function processAIImage(imageUrl: string, type: 'remove-bg' | 'upsc
     }
 
     // Wait for result (Poll for a few seconds as it's an MVP)
-    let result = await replicate.wait(prediction);
+    const result = await replicate.wait(prediction);
 
     if (result.status === "succeeded") {
       // Replicate usually returns an array or single string URL

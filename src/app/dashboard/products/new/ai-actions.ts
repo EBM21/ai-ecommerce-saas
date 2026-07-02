@@ -10,7 +10,7 @@ export async function generateProductCopy(context: string, imageUrl?: string | n
   }
 
   try {
-    let userPrompt: any = [
+    const userPrompt: any = [
       { type: 'text', text: `Context about the product: ${context || 'No specific context provided.'}` }
     ]
 

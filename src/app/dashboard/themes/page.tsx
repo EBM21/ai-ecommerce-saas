@@ -17,14 +17,10 @@ export default async function ThemesPage() {
 
     if (!store) redirect('/onboarding')
 
-    // Find current theme structure if possible
-    let currentThemeName = "Custom"
     if (store.themeConfig) {
         try {
             const parsed = typeof store.themeConfig === 'string' ? JSON.parse(store.themeConfig) : store.themeConfig
             if (parsed.branding?.storeName) {
-                // Not ideal, but we can't easily track the exact theme ID right now unless we added it to the model
-                // But it's okay, we can just show what is currently applied based on some heuristic or just "Custom".
             }
         } catch(e) {}
     }

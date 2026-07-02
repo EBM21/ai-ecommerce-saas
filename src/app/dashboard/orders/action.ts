@@ -116,12 +116,23 @@ export async function getOrderDetails(orderId: string) {
         return { 
             success: true, 
             data: {
-                ...order,
+                id: order.id,
+                displayId: `ORD-${order.id.slice(0, 6).toUpperCase()}`,
+                createdAt: order.createdAt.toISOString(),
+                status: order.status,
                 totalAmount: Number(order.totalAmount),
+                customer: order.customer ? {
+                    name: order.customer.name,
+                    email: order.customer.email,
+                    phone: order.customer.phone
+                } : null,
+                shippingAddress: order.shippingAddress,
                 orderItems: order.orderItems.map(item => ({
-                    ...item,
+                    id: item.id,
+                    quantity: item.quantity,
                     priceAtPurchase: Number(item.priceAtPurchase),
-                    productTitle: item.product.title
+                    productTitle: item.product?.title || 'Unknown Product',
+                    variantName: item.variantName
                 }))
             }
         }
